@@ -12,6 +12,9 @@ let users = [
     name: "Aditi",
     phone: "9999999999",
     city: "Kolkata",
+    email: "care@pawassist.app",
+    petName: "Bruno",
+    notes: "Appointments, health reminders, and support updates",
   },
 ];
 
@@ -47,12 +50,30 @@ function loginUser({ phone, name }) {
       name: name?.trim() || "Pet Parent",
       phone: normalizedPhone,
       city: "Kolkata",
+      email: "care@pawassist.app",
+      petName: "",
+      notes: "Appointments, health reminders, and support updates",
     };
     users.push(user);
     getUserPets(user.id);
   }
 
   return user;
+}
+
+function updateUser(userId, patch) {
+  const index = users.findIndex((entry) => entry.id === userId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  users[index] = {
+    ...users[index],
+    ...patch,
+  };
+
+  return users[index];
 }
 
 function createBooking(payload) {
@@ -80,6 +101,7 @@ module.exports = {
   services,
   providers,
   loginUser,
+  updateUser,
   getBookings,
   createBooking,
   getOverview,

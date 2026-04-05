@@ -22,6 +22,14 @@ const useUserStore = create((set) => ({
     }
     set({ user: data });
   },
+  updateUser: (patch) =>
+    set((state) => {
+      const nextUser = { ...(state.user || {}), ...patch };
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
+      }
+      return { user: nextUser };
+    }),
   logout: () => {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(storageKey);

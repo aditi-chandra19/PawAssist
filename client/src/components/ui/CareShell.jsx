@@ -4,7 +4,8 @@ import useSystemStatus from "../../services/useSystemStatus";
 import PawAssistBrand from "./PawAssistBrand";
 
 const navigation = [
-  { to: "/app/home", label: "Dashboard", icon: "DB" },
+  { to: "/app/home", label: "Home", icon: "HM" },
+  { to: "/app/dashboard", label: "Dashboard", icon: "DB" },
   { to: "/app/pets", label: "My Pets", icon: "PT" },
   { to: "/app/booking", label: "Bookings", icon: "BK" },
   { to: "/app/chat", label: "Messages", icon: "MS" },
@@ -21,6 +22,12 @@ export default function CareShell() {
   const user = useUserStore((state) => state.user);
   const logout = useUserStore((state) => state.logout);
   const systemStatus = useSystemStatus();
+  const initials = (user?.name || "Pet Parent")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="care-layout">
@@ -35,7 +42,7 @@ export default function CareShell() {
 
         <div className="care-user-card">
           <button type="button" className="care-user-card-button" onClick={() => navigate("/app/profile")}>
-            <div className="care-user-avatar">PA</div>
+            <div className="care-user-avatar">{initials}</div>
             <div>
               <strong>{user?.name || "Pet Parent"}</strong>
               <p>{user?.phone || "Local mode"}</p>

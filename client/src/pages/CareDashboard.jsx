@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAppData from "../services/useAppData";
+import useUserStore from "../store/useUserStore";
 
 const featuredServices = [
   {
@@ -10,7 +11,7 @@ const featuredServices = [
     badge: "NEW",
     icon: "VV",
     tone: "blue",
-    to: "/app/booking",
+    to: "/app/booking?service=vet-visit&mode=consult",
     image: "https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&w=900&q=80",
     keywords: ["video", "vet", "consultation", "doctor"],
   },
@@ -21,7 +22,7 @@ const featuredServices = [
     badge: "SOS",
     icon: "ER",
     tone: "orange",
-    to: "/app/booking",
+    to: "/app/booking?service=ambulance&mode=emergency",
     image: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=900&q=80",
     keywords: ["emergency", "ambulance", "urgent", "care"],
   },
@@ -39,21 +40,21 @@ const featuredServices = [
 ];
 
 const premiumServices = [
-  { title: "Premium Vet Visit", price: "Rs 599", icon: "PV", image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=600&q=80", keywords: ["premium", "vet", "visit"] },
-  { title: "Luxury Grooming", price: "Rs 899", icon: "LG", image: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=600&q=80", keywords: ["luxury", "grooming", "spa"] },
-  { title: "Expert Training", price: "Rs 799", icon: "ET", image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80", keywords: ["expert", "training", "behavior"] },
-  { title: "Spa and Wellness", price: "Rs 1,299", icon: "SW", image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=600&q=80", keywords: ["spa", "wellness", "care"] },
-  { title: "Pet Hotel", price: "Rs 999/day", icon: "PH", image: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=600&q=80", keywords: ["hotel", "boarding", "stay"] },
-  { title: "Medicine Express", price: "Rs 99", icon: "ME", image: "https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?auto=format&fit=crop&w=600&q=80", keywords: ["medicine", "express", "delivery"] },
+  { title: "Premium Vet Visit", price: "Rs 599", icon: "PV", image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=600&q=80", keywords: ["premium", "vet", "visit"], to: "/app/booking?service=vet-visit&mode=consult" },
+  { title: "Luxury Grooming", price: "Rs 899", icon: "LG", image: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=600&q=80", keywords: ["luxury", "grooming", "spa"], to: "/app/grooming" },
+  { title: "Expert Training", price: "Rs 799", icon: "ET", image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80", keywords: ["expert", "training", "behavior"], to: "/app/booking?service=training&mode=training" },
+  { title: "Spa and Wellness", price: "Rs 1,299", icon: "SW", image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=600&q=80", keywords: ["spa", "wellness", "care"], to: "/app/grooming" },
+  { title: "Pet Hotel", price: "Rs 999/day", icon: "PH", image: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=600&q=80", keywords: ["hotel", "boarding", "stay"], to: "/app/provider" },
+  { title: "Medicine Express", price: "Rs 99", icon: "ME", image: "https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?auto=format&fit=crop&w=600&q=80", keywords: ["medicine", "express", "delivery"], to: "/app/health" },
 ];
 
 const lifestyleServices = [
-  { title: "Pet Walking", price: "Rs 199", image: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&w=600&q=80", keywords: ["walking", "exercise"] },
-  { title: "Pet Sitting", price: "Rs 399", image: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=600&q=80", keywords: ["sitting", "care", "home"] },
-  { title: "Home Vaccination", price: "Rs 349", image: "https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&w=600&q=80", keywords: ["vaccination", "vaccine", "home"] },
-  { title: "Health Check", price: "Rs 499", image: "https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=600&q=80", keywords: ["health", "checkup"] },
-  { title: "Custom Diet Plan", price: "Rs 299", image: "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?auto=format&fit=crop&w=600&q=80", keywords: ["diet", "plan", "nutrition"] },
-  { title: "24/7 Support", price: "Free", image: "https://images.unsplash.com/photo-1523480717984-24cba35ae1ef?auto=format&fit=crop&w=600&q=80", keywords: ["support", "help"] },
+  { title: "Pet Walking", price: "Rs 199", image: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&w=600&q=80", keywords: ["walking", "exercise"], to: "/app/provider" },
+  { title: "Pet Sitting", price: "Rs 399", image: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=600&q=80", keywords: ["sitting", "care", "home"], to: "/app/provider" },
+  { title: "Home Vaccination", price: "Rs 349", image: "https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&w=600&q=80", keywords: ["vaccination", "vaccine", "home"], to: "/app/health" },
+  { title: "Health Check", price: "Rs 499", image: "https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=600&q=80", keywords: ["health", "checkup"], to: "/app/booking?service=vet-visit&mode=consult" },
+  { title: "Custom Diet Plan", price: "Rs 299", image: "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?auto=format&fit=crop&w=600&q=80", keywords: ["diet", "plan", "nutrition"], to: "/app/ai-assistant?mode=nutrition" },
+  { title: "24/7 Support", price: "Free", image: "https://images.unsplash.com/photo-1523480717984-24cba35ae1ef?auto=format&fit=crop&w=600&q=80", keywords: ["support", "help"], to: "/app/ai-assistant?mode=triage" },
 ];
 
 const quickActions = [
@@ -75,6 +76,7 @@ function matchesQuery(item, query) {
 export default function CareDashboard() {
   const navigate = useNavigate();
   const { data, loading } = useAppData();
+  const user = useUserStore((state) => state.user);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -120,12 +122,13 @@ export default function CareDashboard() {
   };
 
   const totalMatches = filteredFeatured.length + filteredPremium.length + filteredLifestyle.length;
+  const activeUser = user || data.user;
 
   return (
     <div className="dashboard-page dashboard-page-enter premium-dashboard-theme">
       <header className="dashboard-topbar dashboard-surface-card" data-reveal>
         <div>
-          <h1>Good Afternoon, {data.user.name}!</h1>
+          <h1>Good Afternoon, {activeUser?.name || "Pet Parent"}!</h1>
           <p>Care orchestration, wellness, bookings, and support in one premium workspace.</p>
         </div>
         <div className="dashboard-top-actions">
@@ -203,13 +206,14 @@ export default function CareDashboard() {
               {filteredFeatured.map((service) => (
                 <article
                   key={service.title}
-                  className={`featured-service-card ${service.tone} image-card`}
-                  style={{ backgroundImage: `linear-gradient(180deg, rgba(15,23,42,0.06), rgba(15,23,42,0.56)), url(${service.image})` }}
+                  className={`featured-service-card ${service.tone} image-card featured-photo-card`}
                   onClick={() => navigate(service.to)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => handleEnterNavigate(event, service.to)}
                 >
+                  <img src={service.image} alt={service.title} className="featured-service-photo" />
+                  <div className="featured-service-overlay" />
                   <div className="featured-service-top">
                     <div className="featured-service-icon">{service.icon}</div>
                     <span className="featured-badge">{service.badge}</span>
@@ -269,10 +273,10 @@ export default function CareDashboard() {
                 <article
                   key={service.title}
                   className="premium-service-card dashboard-surface-card"
-                  onClick={() => navigate("/app/booking")}
+                  onClick={() => navigate(service.to)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(event) => handleEnterNavigate(event, "/app/booking")}
+                  onKeyDown={(event) => handleEnterNavigate(event, service.to)}
                 >
                   <img src={service.image} alt={service.title} className="service-card-image" />
                   <div className="premium-service-icon">{service.icon}</div>
@@ -291,10 +295,10 @@ export default function CareDashboard() {
                 <article
                   key={service.title}
                   className="lifestyle-card dashboard-surface-card"
-                  onClick={() => navigate("/app/booking")}
+                  onClick={() => navigate(service.to)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(event) => handleEnterNavigate(event, "/app/booking")}
+                  onKeyDown={(event) => handleEnterNavigate(event, service.to)}
                 >
                   <img src={service.image} alt={service.title} className="lifestyle-card-image" />
                   <div>
@@ -352,26 +356,36 @@ export default function CareDashboard() {
 
           <section
             className="promo-card insurance dashboard-surface-card promo-card-image"
-            style={{ backgroundImage: "linear-gradient(135deg, rgba(3,105,161,0.76), rgba(34,193,220,0.72)), url(https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80)" }}
             onClick={() => navigate("/app/insurance")}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => handleEnterNavigate(event, "/app/insurance")}
             data-reveal
           >
+            <img
+              src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80"
+              alt="Pet insurance"
+              className="promo-card-photo"
+            />
+            <div className="promo-card-overlay insurance-overlay" />
             <h3>Pet Insurance</h3>
             <p>Protection plans, claim support, and preventive care coverage.</p>
           </section>
 
           <section
             className="promo-card community dashboard-surface-card promo-card-image"
-            style={{ backgroundImage: "linear-gradient(135deg, rgba(251,113,133,0.76), rgba(236,72,153,0.76)), url(https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=900&q=80)" }}
             onClick={() => navigate("/app/community")}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => handleEnterNavigate(event, "/app/community")}
             data-reveal
           >
+            <img
+              src="https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=900&q=80"
+              alt="Pet parent community"
+              className="promo-card-photo"
+            />
+            <div className="promo-card-overlay community-overlay" />
             <h3>Join Community</h3>
             <p>Advice, celebrations, and trusted stories from pet parents like you.</p>
           </section>

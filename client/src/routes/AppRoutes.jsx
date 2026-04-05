@@ -1,11 +1,12 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 
 import AppShell from "../components/ui/CareShell";
-import Login from "../pages/LoginPage";
-import Home from "../pages/Home";
+import Login from "../pages/AuthLoginPage";
+import Register from "../pages/RegisterPage";
+import Home from "../pages/PostLoginHome.jsx";
 import Dashboard from "../pages/CareDashboard";
 import Pets from "../pages/Pets";
-import Booking from "../pages/Booking.jsx";
+import Booking from "../pages/ServiceBookingPage.jsx";
 import Tracking from "../pages/Tracking";
 import Grooming from "../pages/Grooming";
 import Wallet from "../pages/Wallet";
@@ -14,7 +15,7 @@ import Provider from "../pages/Provider";
 import Notifications from "../pages/Notifications";
 import Health from "../pages/Health";
 import Premium from "../pages/Premium";
-import AIAssistant from "../pages/AIAssistant";
+import AIAssistant from "../pages/ProAIAssistant.jsx";
 import Community from "../pages/Community";
 import Insurance from "../pages/Insurance";
 import Profile from "../pages/Profile";
@@ -41,11 +42,13 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route element={<ProtectedRoutes />}>
           <Route path="/app" element={<AppShell />}>
             <Route index element={<Navigate to="/app/home" replace />} />
-            <Route path="home" element={<Dashboard />} />
+            <Route path="home" element={<Home />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="pets" element={<Pets />} />
             <Route path="booking" element={<Booking />} />
             <Route path="tracking" element={<Tracking />} />

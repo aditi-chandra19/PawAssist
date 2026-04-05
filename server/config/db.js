@@ -20,6 +20,9 @@ async function connectDatabase() {
   try {
     await mongoose.connect(mongoUri, {
       dbName: process.env.MONGODB_DB || "pawassist",
+      serverSelectionTimeoutMS: 2500,
+      connectTimeoutMS: 2500,
+      socketTimeoutMS: 5000,
     });
     isMongoReady = true;
     console.log("MongoDB connected successfully.");

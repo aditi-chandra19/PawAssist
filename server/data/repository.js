@@ -41,6 +41,9 @@ async function loginUser(payload) {
       phone: normalizedPhone,
       name: payload.name?.trim() || "Pet Parent",
       city: "Kolkata",
+      email: payload.email?.trim() || "care@pawassist.app",
+      petName: payload.petName?.trim() || "",
+      notes: payload.notes?.trim() || "Appointments, health reminders, and support updates",
     });
   } else if (payload.name?.trim() && user.name !== payload.name.trim()) {
     user.name = payload.name.trim();
@@ -54,6 +57,9 @@ async function loginUser(payload) {
     name: user.name,
     phone: user.phone,
     city: user.city,
+    email: user.email,
+    petName: user.petName,
+    notes: user.notes,
   };
 }
 
@@ -73,6 +79,40 @@ async function getUserById(userId) {
     name: user.name,
     phone: user.phone,
     city: user.city,
+    email: user.email,
+    petName: user.petName,
+    notes: user.notes,
+  };
+}
+
+async function updateUser(userId, patch) {
+  if (!isDatabaseReady()) {
+    return memoryStore.updateUser(userId, patch);
+  }
+
+  const user = await User.findOne({ userId });
+
+  if (!user) {
+    return null;
+  }
+
+  const allowedFields = ["name", "phone", "city", "email", "petName", "notes"];
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(patch, field) && patch[field] !== undefined) {
+      user[field] = typeof patch[field] === "string" ? patch[field].trim() : patch[field];
+    }
+  }
+
+  await user.save();
+
+  return {
+    id: user.userId,
+    name: user.name,
+    phone: user.phone,
+    city: user.city,
+    email: user.email,
+    petName: user.petName,
+    notes: user.notes,
   };
 }
 
@@ -150,6 +190,7 @@ module.exports = {
   services,
   providers,
   loginUser,
+  updateUser,
   getUserById,
   getBookings,
   createBooking,

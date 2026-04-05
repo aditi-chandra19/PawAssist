@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL = "http://localhost:5001/api";
 let apiStatus = "unknown";
 let lastCheckedAt = 0;
 let inFlightHealthCheck = null;
@@ -30,7 +30,10 @@ export const canUseApi = async () => {
 
   inFlightHealthCheck = (async () => {
     try {
-      await fetch(`${API_BASE_URL}/health`, { method: "GET" });
+      const response = await fetch(`${API_BASE_URL}/health`, { method: "GET" });
+      if (!response.ok) {
+        throw new Error(`Health check failed with status ${response.status}`);
+      }
       apiStatus = "up";
       lastCheckedAt = Date.now();
       failedChecks = 0;
