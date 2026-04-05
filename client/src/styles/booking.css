@@ -1,0 +1,93 @@
+.booking-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f5f3ff, #ffffff);
+  font-family: 'Poppins', sans-serif;
+}
+
+.header {
+  padding: 40px 20px 30px;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: white;
+}
+
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.section {
+  padding: 20px;
+}
+
+.step-title {
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.card.active {
+  border-color: #7c3aed;
+}
+
+.time-slot {
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.time-slot.active {
+  background: #7c3aed;
+  color: white;
+}
+
+.provider-card {
+  background: white;
+  border-radius: 16px;
+  padding: 15px;
+  border: 2px solid #eee;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.provider-card.active {
+  border-color: #7c3aed;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  font-weight: 700;
+  font-size: 16px;
+  background: #7c3aed;
+  color: white;
+}
+
+.confirm-btn:disabled {
+  background: #ccc;
+}

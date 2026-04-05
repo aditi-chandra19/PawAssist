@@ -1,0 +1,51 @@
+import axios from "axios";
+
+export const API_BASE_URL = "http://localhost:5000/api";
+let apiStatus = "unknown";
+let lastCheckedAt = 0;
+let inFlightHealthCheck = null;
+let failedChecks = 0;
+
+const API = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 2500,
+});
+
+export const canUseApi = async () => {
+  const now = Date.now();
+  const upCooldown = 30000;
+  const downCooldown = Math.min(180000, 15000 * Math.max(1, failedChecks));
+
+  if (apiStatus === "up" && now - lastCheckedAt < upCooldown) {
+    return true;
+  }
+
+  if (apiStatus === "down" && now - lastCheckedAt < downCooldown) {
+    return false;
+  }
+
+  if (inFlightHealthCheck) {
+    return inFlightHealthCheck;
+  }
+
+  inFlightHealthCheck = (async () => {
+    try {
+      await fetch(`${API_BASE_URL}/health`, { method: "GET" });
+      apiStatus = "up";
+      lastCheckedAt = Date.now();
+      failedChecks = 0;
+      return true;
+    } catch {
+      apiStatus = "down";
+      lastCheckedAt = Date.now();
+      failedChecks += 1;
+      return false;
+    } finally {
+      inFlightHealthCheck = null;
+    }
+  })();
+
+  return inFlightHealthCheck;
+};
+
+export default API;
