@@ -14,7 +14,7 @@ import Chat from "../pages/Chat";
 import Provider from "../pages/Provider";
 import Notifications from "../pages/Notifications";
 import Health from "../pages/Health";
-import Premium from "../pages/Premium";
+import Premium from "../pages/PremiumShowcase.jsx";
 import AIAssistant from "../pages/ProAIAssistant.jsx";
 import Community from "../pages/Community";
 import Insurance from "../pages/Insurance";
