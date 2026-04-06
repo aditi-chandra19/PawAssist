@@ -73,11 +73,12 @@ function matchesQuery(item, query) {
   return haystack.includes(query.toLowerCase());
 }
 
-export default function CareDashboard() {
+export default function CareDashboard({ forcePreview = false }) {
   const navigate = useNavigate();
   const { data, loading } = useAppData();
   const user = useUserStore((state) => state.user);
   const [searchQuery, setSearchQuery] = useState("");
+  const isGuestPreview = forcePreview || !user;
 
   useEffect(() => {
     const nodes = document.querySelectorAll("[data-reveal]");
@@ -115,21 +116,52 @@ export default function CareDashboard() {
     return <div className="panel">Loading your care dashboard...</div>;
   }
 
+  const navigateWithAuth = (to) => {
+    if (user && !forcePreview) {
+      navigate(to);
+      return;
+    }
+
+    navigate("/login", { state: { from: "/app/home" } });
+  };
+
+  const previewActionLabel = isGuestPreview ? "Sign In" : "Book";
+
   const handleEnterNavigate = (event, to) => {
     if (event.key === "Enter" || event.key === " ") {
-      navigate(to);
+      navigateWithAuth(to);
     }
   };
 
   const totalMatches = filteredFeatured.length + filteredPremium.length + filteredLifestyle.length;
-  const activeUser = user || data.user;
+  const activeUser = user || { name: "Guest" };
 
   return (
     <div className="dashboard-page dashboard-page-enter premium-dashboard-theme">
+      {isGuestPreview ? (
+        <section className="dashboard-topbar dashboard-surface-card" style={{ marginBottom: "1rem", background: "linear-gradient(90deg, #7c3aed 0%, #db2777 100%)", color: "#fff" }}>
+          <div>
+            <h1 style={{ color: "#fff", marginBottom: "0.35rem" }}>You&apos;re in preview mode</h1>
+            <p style={{ color: "rgba(255,255,255,0.9)" }}>
+              Sign in to book services and access the full PawAssist app.
+            </p>
+          </div>
+          <div className="dashboard-top-actions">
+            <button type="button" className="dashboard-search-button" onClick={() => navigate("/login", { state: { from: "/app/home" } })}>
+              Sign In Now
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <header className="dashboard-topbar dashboard-surface-card" data-reveal>
         <div>
-          <h1>Good Afternoon, {activeUser?.name || "Pet Parent"}!</h1>
-          <p>Care orchestration, wellness, bookings, and support in one premium workspace.</p>
+          <h1>{isGuestPreview ? "Dashboard Preview" : `Good Afternoon, ${activeUser?.name || "Pet Parent"}!`}</h1>
+          <p>
+            {isGuestPreview
+              ? "Exploring all available services before login."
+              : "Care orchestration, wellness, bookings, and support in one premium workspace."}
+          </p>
         </div>
         <div className="dashboard-top-actions">
           <label className="dashboard-search-shell">
@@ -140,8 +172,8 @@ export default function CareDashboard() {
               placeholder="Search services, grooming, insurance, walking..."
             />
           </label>
-          <button type="button" className="dashboard-search-button" onClick={() => navigate("/app/booking")}>
-            Go
+          <button type="button" className="dashboard-search-button" onClick={() => navigateWithAuth("/app/booking")}>
+            {isGuestPreview ? "Sign In" : "Go"}
           </button>
           <div className="dashboard-bell">{data.stats.unreadMessages}</div>
         </div>
@@ -175,7 +207,7 @@ export default function CareDashboard() {
           <section className="dashboard-section" data-reveal>
             <div className="dashboard-section-head">
               <h2>Quick Actions</h2>
-              <button type="button" className="dashboard-link-button" onClick={() => navigate("/app/premium")}>
+              <button type="button" className="dashboard-link-button" onClick={() => navigateWithAuth("/app/premium")}>
                 Open Control Center
               </button>
             </div>
@@ -185,7 +217,7 @@ export default function CareDashboard() {
                   key={action.title}
                   type="button"
                   className={`dashboard-quick-card quick-${index + 1}`}
-                  onClick={() => navigate(action.to)}
+                  onClick={() => navigateWithAuth(action.to)}
                 >
                   <img src={action.image} alt={action.title} className="dashboard-quick-image" />
                   <strong>{action.title}</strong>
@@ -198,7 +230,7 @@ export default function CareDashboard() {
           <section className="dashboard-section" data-reveal>
             <div className="dashboard-section-head">
               <h2>Featured Services</h2>
-              <button type="button" className="dashboard-link-button" onClick={() => navigate("/app/booking")}>
+              <button type="button" className="dashboard-link-button" onClick={() => navigateWithAuth("/app/booking")}>
                 View All
               </button>
             </div>
@@ -207,7 +239,7 @@ export default function CareDashboard() {
                 <article
                   key={service.title}
                   className={`featured-service-card ${service.tone} image-card featured-photo-card`}
-                  onClick={() => navigate(service.to)}
+                  onClick={() => navigateWithAuth(service.to)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => handleEnterNavigate(event, service.to)}
@@ -227,10 +259,10 @@ export default function CareDashboard() {
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          navigate(service.to);
+                          navigateWithAuth(service.to);
                         }}
                       >
-                        Book
+                        {previewActionLabel}
                       </button>
                     </div>
                   </div>
@@ -247,7 +279,7 @@ export default function CareDashboard() {
                 Last visit was 45 days ago. Our care engine recommends a proactive routine checkup,
                 hydration review, and coat-health screening this week.
               </p>
-              <button type="button" onClick={() => navigate("/app/booking")}>
+              <button type="button" onClick={() => navigateWithAuth("/app/booking")}>
                 Schedule Now
               </button>
             </div>
@@ -264,7 +296,7 @@ export default function CareDashboard() {
           <section className="dashboard-section" data-reveal>
             <div className="dashboard-section-head">
               <h2>Premium Services</h2>
-              <button type="button" className="dashboard-link-button" onClick={() => navigate("/app/premium")}>
+              <button type="button" className="dashboard-link-button" onClick={() => navigateWithAuth("/app/premium")}>
                 View All
               </button>
             </div>
@@ -273,7 +305,7 @@ export default function CareDashboard() {
                 <article
                   key={service.title}
                   className="premium-service-card dashboard-surface-card"
-                  onClick={() => navigate(service.to)}
+                  onClick={() => navigateWithAuth(service.to)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => handleEnterNavigate(event, service.to)}
@@ -295,7 +327,7 @@ export default function CareDashboard() {
                 <article
                   key={service.title}
                   className="lifestyle-card dashboard-surface-card"
-                  onClick={() => navigate(service.to)}
+                  onClick={() => navigateWithAuth(service.to)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => handleEnterNavigate(event, service.to)}
@@ -305,7 +337,7 @@ export default function CareDashboard() {
                     <h3>{service.title}</h3>
                     <strong>{service.price}</strong>
                   </div>
-                  <span>Go</span>
+                  <span>{isGuestPreview ? "Sign In" : "Go"}</span>
                 </article>
               ))}
             </div>
@@ -332,8 +364,8 @@ export default function CareDashboard() {
                 <p>{index === 0 ? "Dr. Priya Sharma" : "Riya Kapoor"}</p>
               </article>
             ))}
-            <button className="book-appointment-button" type="button" onClick={() => navigate("/app/booking")}>
-              Book New Appointment
+            <button className="book-appointment-button" type="button" onClick={() => navigateWithAuth("/app/booking")}>
+              {isGuestPreview ? "Sign In to Book" : "Book New Appointment"}
             </button>
           </section>
 
@@ -356,7 +388,7 @@ export default function CareDashboard() {
 
           <section
             className="promo-card insurance dashboard-surface-card promo-card-image"
-            onClick={() => navigate("/app/insurance")}
+            onClick={() => navigateWithAuth("/app/insurance")}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => handleEnterNavigate(event, "/app/insurance")}
@@ -374,7 +406,7 @@ export default function CareDashboard() {
 
           <section
             className="promo-card community dashboard-surface-card promo-card-image"
-            onClick={() => navigate("/app/community")}
+            onClick={() => navigateWithAuth("/app/community")}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => handleEnterNavigate(event, "/app/community")}

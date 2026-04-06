@@ -21,11 +21,6 @@ import Insurance from "../pages/Insurance";
 import Profile from "../pages/Profile";
 import useUserStore from "../store/useUserStore";
 
-function RootRedirect() {
-  const user = useUserStore((state) => state.user);
-  return <Navigate to={user ? "/app/home" : "/login"} replace />;
-}
-
 function ProtectedRoutes() {
   const user = useUserStore((state) => state.user);
 
@@ -40,7 +35,9 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<RootRedirect />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/explore" element={<Dashboard forcePreview />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

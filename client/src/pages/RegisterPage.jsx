@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import heroImage from "../assets/hero.png";
 import { loginUser } from "../services/authService";
 import useUserStore from "../store/useUserStore";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setUser = useUserStore((state) => state.setUser);
   const [form, setForm] = useState({
     name: "",
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const redirectTo = location.state?.from || "/app/home";
 
   const updateField = (field) => (event) => {
     setForm((current) => ({
@@ -45,7 +47,7 @@ export default function RegisterPage() {
         petName: form.petName.trim() || "Buddy",
         city: form.city.trim() || response.user.city || "Kolkata",
       });
-      navigate("/app/home", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError("Registration failed. Please try again.");
       console.error("Register Error:", err);
@@ -149,7 +151,12 @@ export default function RegisterPage() {
             <span />
           </div>
 
-          <Link to="/login" className="paw-social-button" style={{ justifyContent: "center" }}>
+          <Link
+            to="/login"
+            state={location.state}
+            className="paw-social-button"
+            style={{ justifyContent: "center" }}
+          >
             <strong>Back to Login</strong>
           </Link>
         </section>

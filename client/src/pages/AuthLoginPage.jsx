@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import heroImage from "../assets/hero.png";
 import { loginUser } from "../services/authService";
 import useUserStore from "../store/useUserStore";
 
 export default function AuthLoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setUser = useUserStore((state) => state.setUser);
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
+  const redirectTo = location.state?.from || "/app/home";
 
   const otpValue = useMemo(() => otp.join(""), [otp]);
 
@@ -50,7 +52,7 @@ export default function AuthLoginPage() {
     try {
       const response = await loginUser({ phone });
       setUser(response.user);
-      navigate("/app/home", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError("Login failed. Please try again.");
       console.error("Login Error:", err);
@@ -146,7 +148,12 @@ export default function AuthLoginPage() {
             <span />
           </div>
 
-          <Link to="/register" className="paw-social-button" style={{ justifyContent: "center" }}>
+          <Link
+            to="/register"
+            state={location.state}
+            className="paw-social-button"
+            style={{ justifyContent: "center" }}
+          >
             <strong>Create Account</strong>
           </Link>
         </section>
