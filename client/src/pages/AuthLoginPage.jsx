@@ -27,9 +27,9 @@ const loginHighlights = [
 export default function AuthLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const setUser = useUserStore((state) => state.setUser);
+  const setSession = useUserStore((state) => state.setSession);
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [otpSent, setOtpSent] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -109,7 +109,7 @@ export default function AuthLoginPage() {
     setError("");
     setStatusMessage("");
     setIssuedOtp("");
-    setOtp(["", "", "", ""]);
+    setOtp(["", "", "", "", "", ""]);
 
     try {
       const response = await requestOtp({ phone: normalizedPhone });
@@ -135,8 +135,8 @@ export default function AuthLoginPage() {
       return;
     }
 
-    if (otpValue.length !== 4) {
-      setError("Enter the 4-digit OTP to continue.");
+    if (otpValue.length !== 6) {
+      setError("Enter the 6-digit OTP to continue.");
       return;
     }
 
@@ -146,7 +146,11 @@ export default function AuthLoginPage() {
 
     try {
       const response = await loginWithOtp({ phone: normalizedPhone, otp: otpValue });
-      setUser(response.user);
+      setSession({
+        user: response.user,
+        token: response.token,
+        expiresAt: response.expiresAt,
+      });
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed. Please try again.");
@@ -209,7 +213,7 @@ export default function AuthLoginPage() {
                   const nextPhone = event.target.value.replace(/\D/g, "").slice(0, 10);
                   setPhone(nextPhone);
                   setOtpSent(false);
-                  setOtp(["", "", "", ""]);
+                  setOtp(["", "", "", "", "", ""]);
                   setError("");
                   setStatusMessage("");
                   setIssuedOtp("");

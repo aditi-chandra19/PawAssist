@@ -44,6 +44,7 @@ export default function ProAIAssistant() {
   const mode = searchParams.get("mode") || "triage";
   const [messages, setMessages] = useState(starterConversation);
   const [draft, setDraft] = useState("");
+  const [actionNote, setActionNote] = useState("");
 
   const headerCopy = useMemo(() => {
     if (mode === "nutrition") {
@@ -72,6 +73,15 @@ export default function ProAIAssistant() {
       { side: "left", text: reply, meta: "Just now" },
     ]);
     setDraft("");
+  };
+
+  const handlePhotoAssist = () => {
+    setDraft((current) => current || "I want help reviewing a photo of my pet's condition.");
+    setActionNote("Describe the photo and I will guide the next step.");
+  };
+
+  const handleTimelineAssist = () => {
+    navigate(mode === "nutrition" ? "/app/health" : "/app/tracking");
   };
 
   return (
@@ -125,6 +135,8 @@ export default function ProAIAssistant() {
           ))}
         </div>
 
+        {actionNote ? <p className="messages-action-note">{actionNote}</p> : null}
+
         <div className="quick-question-grid">
           {quickQuestions.map((question) => (
             <button key={question} className="quick-question" onClick={() => setDraft(question)}>
@@ -134,8 +146,8 @@ export default function ProAIAssistant() {
         </div>
 
         <div className="message-composer">
-          <button className="composer-tool">Photo</button>
-          <button className="composer-tool">Timeline</button>
+          <button className="composer-tool" onClick={handlePhotoAssist}>Photo</button>
+          <button className="composer-tool" onClick={handleTimelineAssist}>Timeline</button>
           <div className="composer-input-row">
             <input
               value={draft}

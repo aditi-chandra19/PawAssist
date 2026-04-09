@@ -1,16 +1,17 @@
 const router = require("express").Router();
 const { createBooking, getBookings } = require("../data/repository");
+const { requireAuth } = require("../middleware/auth");
 
-router.post("/", async (req, res) => {
-  const { userId, petId, serviceId, providerId, date, time, note } = req.body || {};
+router.post("/", requireAuth, async (req, res) => {
+  const { petId, serviceId, providerId, date, time, note } = req.body || {};
 
-  if (!userId || !petId || !serviceId || !providerId || !date || !time) {
+  if (!petId || !serviceId || !providerId || !date || !time) {
     return res.status(400).json({ message: "Missing required booking fields." });
   }
 
   try {
     const booking = await createBooking({
-      userId,
+      userId: req.auth.sub,
       petId,
       serviceId,
       providerId,
@@ -25,11 +26,9 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
-  const { userId } = req.query || {};
-
+router.get("/", requireAuth, async (req, res) => {
   try {
-    return res.json(await getBookings(userId));
+    return res.json(await getBookings(req.auth.sub));
   } catch (error) {
     return res.status(500).json({ message: "Unable to fetch bookings.", error: error.message });
   }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiBell, FiChevronRight, FiCreditCard, FiDownload, FiGlobe, FiLock, FiMail, FiMapPin, FiPhone, FiTrash2, FiUser, FiX } from "react-icons/fi";
 import { buildFallbackOverview } from "../services/fallbackData";
 import { updateProfile } from "../services/profileService";
@@ -43,6 +43,7 @@ const defaultPasswordForm = { current: "", next: "", confirm: "" };
 
 export default function Profile() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = useUserStore((state) => state.user);
   const updateUser = useUserStore((state) => state.updateUser);
   const logout = useUserStore((state) => state.logout);
@@ -68,7 +69,9 @@ export default function Profile() {
     exportSettingsSnapshot,
   } = useSettingsStore();
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const activeTab = tabItems.some((item) => item.id === searchParams.get("tab"))
+    ? searchParams.get("tab")
+    : "profile";
   const [expandedHelp, setExpandedHelp] = useState("terms");
   const [savedMessage, setSavedMessage] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -107,7 +110,7 @@ export default function Profile() {
 
     try {
       if (user?.id) {
-        await updateProfile(user.id, nextUser);
+        await updateProfile(nextUser);
       }
     } catch (error) {
       console.error("Profile sync failed:", error);
@@ -165,7 +168,7 @@ export default function Profile() {
   const handleDeleteAccount = async () => {
     try {
       if (user?.id) {
-        await removeAccount(user.id);
+        await removeAccount();
       }
     } catch (error) {
       console.error("Account deletion sync failed:", error);
@@ -206,6 +209,10 @@ export default function Profile() {
     setExpandedHelp((current) => (current === id ? "" : id));
   };
 
+  const handleTabSelect = (tabId) => {
+    setSearchParams(tabId === "profile" ? {} : { tab: tabId });
+  };
+
   return (
     <div className="settings-page">
       <header className="settings-hero">
@@ -222,7 +229,7 @@ export default function Profile() {
           {tabItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button key={item.id} type="button" className={`settings-tab ${activeTab === item.id ? `active ${item.tone}` : ""}`} onClick={() => setActiveTab(item.id)}>
+              <button key={item.id} type="button" className={`settings-tab ${activeTab === item.id ? `active ${item.tone}` : ""}`} onClick={() => handleTabSelect(item.id)}>
                 <span className={`settings-tab-icon ${item.tone}`}><Icon /></span>
                 {item.label}
               </button>

@@ -6,45 +6,29 @@ const requireApi = async () => {
   }
 };
 
-export const fetchSettings = async (userId) => {
-  if (!userId) {
-    throw new Error("User id is required to load settings.");
-  }
-
+export const fetchSettings = async () => {
   await requireApi();
-  const response = await API.get(`/auth/settings/${userId}`);
+  const response = await API.get("/auth/settings");
   return response.data;
 };
 
-export const saveSettings = async (userId, payload) => {
-  if (!userId) {
-    throw new Error("User id is required to save settings.");
-  }
-
+export const saveSettings = async (payload) => {
   await requireApi();
-  const response = await API.put(`/auth/settings/${userId}`, payload);
+  const response = await API.put("/auth/settings", payload);
   return response.data;
 };
 
-export const savePassword = async (userId, currentPassword, nextPassword) => {
-  if (!userId) {
-    throw new Error("User id is required to change password.");
-  }
-
+export const savePassword = async (currentPassword, nextPassword) => {
   await requireApi();
-  const response = await API.put(`/auth/password/${userId}`, {
+  const response = await API.put("/auth/password", {
     currentPassword,
     nextPassword,
   });
   return response.data;
 };
 
-export const removeAccount = async (userId) => {
-  if (!userId) {
-    throw new Error("User id is required to delete account.");
-  }
-
+export const removeAccount = async () => {
   await requireApi();
-  const response = await API.delete(`/auth/account/${userId}`);
+  const response = await API.delete("/auth/account");
   return response.data;
 };

@@ -6,7 +6,7 @@ import useUserStore from "./useUserStore";
 const storageKey = "pawassist.settings";
 
 const defaults = {
-  accountPassword: "pawassist123",
+  accountPassword: "",
   language: "English",
   currency: "INR (Rs)",
   themeMode: "light",
@@ -94,7 +94,7 @@ const syncSettings = async (snapshot) => {
   }
 
   try {
-    await saveSettings(user.id, snapshot);
+    await saveSettings(snapshot);
   } catch (error) {
     console.error("Settings sync failed:", error);
   }
@@ -119,7 +119,7 @@ const useSettingsStore = create((set, get) => ({
     }
 
     try {
-      const remote = await fetchSettings(userId);
+      const remote = await fetchSettings();
       get().replaceAllSettings(remote);
       return true;
     } catch (error) {
@@ -202,7 +202,7 @@ const useSettingsStore = create((set, get) => ({
 
     if (user?.id) {
       try {
-        await savePassword(user.id, currentPassword, nextPassword);
+        await savePassword(currentPassword, nextPassword);
       } catch (error) {
         if (error?.response) {
           throw error;

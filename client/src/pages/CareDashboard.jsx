@@ -12,7 +12,7 @@ const promoSlides = [
     kicker: "Start From",
     badge: "Upto 20% Discount",
     image: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=900&q=80",
-    to: "/app/provider",
+    to: "/app/provider?service=pet-walking",
     tab: "services",
   },
   {
@@ -45,7 +45,7 @@ const promoSlides = [
     kicker: "Start from",
     badge: "Top Rated",
     image: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=900&q=80",
-    to: "/app/provider",
+    to: "/app/provider?service=pet-hotel",
     tab: "services",
   },
   {
@@ -67,7 +67,7 @@ const promoSlides = [
     kicker: "Start from",
     badge: "Fresh Picks",
     image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=900&q=80",
-    to: "/app/wallet",
+    to: "/app/booking?service=medicine-express&mode=delivery",
     tab: "products",
   },
   {
@@ -89,7 +89,7 @@ const promoSlides = [
     kicker: "Start from",
     badge: "Vet Pick",
     image: "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?auto=format&fit=crop&w=900&q=80",
-    to: "/app/health",
+    to: "/app/provider?service=custom-diet",
     tab: "products",
   },
   {
@@ -164,7 +164,7 @@ function buildServiceRoute(service) {
   }
 
   if (service.id === "custom-diet") {
-    return "/app/ai-assistant?mode=nutrition";
+    return "/app/provider?service=custom-diet";
   }
 
   if (service.id === "support-247") {
@@ -180,7 +180,7 @@ function buildServiceRoute(service) {
   }
 
   if (["pet-walking", "pet-sitting", "pet-hotel", "pet-taxi"].includes(service.id)) {
-    return "/app/provider";
+    return `/app/provider?service=${service.id}`;
   }
 
   if (["luxury-grooming", "spa-wellness"].includes(service.id)) {
@@ -192,7 +192,7 @@ function buildServiceRoute(service) {
   }
 
   if (["training", "fitness-training"].includes(service.id)) {
-    return "/app/booking?service=training&mode=training";
+    return `/app/booking?service=${service.id}&mode=training`;
   }
 
   return `/app/booking?service=${service.id}&mode=${service.mode || "default"}`;
@@ -293,10 +293,6 @@ export default function CareDashboard({ forcePreview = false }) {
     () => promoSlides.filter((slide) => slide.tab === activePromoTab),
     [activePromoTab],
   );
-
-  useEffect(() => {
-    setPromoIndex(0);
-  }, [activePromoTab]);
 
   useEffect(() => {
     if (visiblePromoSlides.length <= 1) {
@@ -434,7 +430,10 @@ export default function CareDashboard({ forcePreview = false }) {
               <button
                 type="button"
                 className={`dashboard-promo-tab${activePromoTab === "services" ? " active" : ""}`}
-                onClick={() => setActivePromoTab("services")}
+                    onClick={() => {
+                      setActivePromoTab("services");
+                      setPromoIndex(0);
+                    }}
               >
                 Pet Services
               </button>
@@ -442,7 +441,10 @@ export default function CareDashboard({ forcePreview = false }) {
               <button
                 type="button"
                 className={`dashboard-promo-tab${activePromoTab === "products" ? " active" : ""}`}
-                onClick={() => setActivePromoTab("products")}
+                    onClick={() => {
+                      setActivePromoTab("products");
+                      setPromoIndex(0);
+                    }}
               >
                 Pet Products
               </button>
@@ -623,7 +625,6 @@ export default function CareDashboard({ forcePreview = false }) {
                 loading="lazy"
                 decoding="async"
               />
-              <div className="insight-brain">AI</div>
             </div>
           </section>
 

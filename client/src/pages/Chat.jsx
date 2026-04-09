@@ -92,53 +92,34 @@ const formatTime = () =>
     minute: "2-digit",
   }).format(new Date());
 
-const buildThreads = (appThreads) => {
-  if (!Array.isArray(appThreads) || !appThreads.length) {
-    return defaultThreads;
-  }
-
-  const threadMap = new Map(defaultThreads.map((thread) => [thread.id, thread]));
-
-  return appThreads.map((thread, index) => {
-    const fallback = threadMap.get(thread.id) || defaultThreads[index % defaultThreads.length];
-    return {
-      ...fallback,
-      id: thread.id,
-      name: thread.name || fallback.name,
-      role: thread.role || fallback.role,
-      unread: thread.unread || 0,
-      messages: fallback.messages,
-    };
-  });
-};
-
 export default function Chat() {
-  const { data, loading } = useAppData();
-  const [threads, setThreads] = useState(defaultThreads);
-  const [selectedThreadId, setSelectedThreadId] = useState(defaultThreads[0].id);
-  const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
-  const [actionNote, setActionNote] = useState("");
-  const fileInputRef = useRef(null);
-  const threadEndRef = useRef(null);
+  const { loading } = useAppData();
+  const [threads, setThreads] = useState(() => {
+    if (typeof window === "undefined") {
+      return defaultThreads;
+    }
 
-  useEffect(() => {
     const stored = window.localStorage.getItem(storageKey);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length) {
-          setThreads(parsed);
-          return;
+          return parsed;
         }
       } catch {
         window.localStorage.removeItem(storageKey);
       }
     }
 
-    const seededThreads = buildThreads(data?.chatThreads);
-    setThreads(seededThreads);
-  }, [data?.chatThreads]);
+    return defaultThreads;
+  });
+  const [selectedThreadId, setSelectedThreadId] = useState(defaultThreads[0].id);
+  const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState("");
+  const [actionNote, setActionNote] = useState("");
+  const fileInputRef = useRef(null);
+  const threadEndRef = useRef(null);
+  const messageIdRef = useRef(1000);
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify(threads));
@@ -180,6 +161,12 @@ export default function Chat() {
     );
   };
 
+  const createMessageId = (prefix) => {
+    const nextId = `${prefix}-${messageIdRef.current}`;
+    messageIdRef.current += 1;
+    return nextId;
+  };
+
   const pushSystemMessage = (text) => {
     if (!activeThread) {
       return;
@@ -190,7 +177,7 @@ export default function Chat() {
       messages: [
         ...thread.messages,
         {
-          id: `sys-${Date.now()}`,
+          id: createMessageId("sys"),
           side: "left",
           text,
           time: formatTime(),
@@ -214,7 +201,7 @@ export default function Chat() {
     }
 
     const message = {
-      id: `msg-${Date.now()}`,
+      id: createMessageId("msg"),
       side: "right",
       text: draft.trim(),
       time: formatTime(),
@@ -238,7 +225,7 @@ export default function Chat() {
 
     const imageUrl = URL.createObjectURL(file);
     const message = {
-      id: `img-${Date.now()}`,
+      id: createMessageId("img"),
       side: "right",
       text: file.name,
       imageUrl,
@@ -269,7 +256,7 @@ export default function Chat() {
     setDraft((current) => `${current}${current ? " " : ""}🙂`);
   };
 
-  if (loading || !data) {
+  if (loading) {
     return <div className="panel">Loading messages...</div>;
   }
 

@@ -1,5 +1,3 @@
-const DEFAULT_PASSWORD = "pawassist123";
-
 function createDefaultSettings() {
   return {
     language: "English",
@@ -106,7 +104,6 @@ function normalizeSettingsPayload(input = {}) {
 }
 
 module.exports = {
-  DEFAULT_PASSWORD,
   createDefaultSettings,
   normalizeSettingsPayload,
 };

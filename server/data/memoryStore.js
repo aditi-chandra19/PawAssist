@@ -5,10 +5,8 @@ const {
   baseBookings,
   buildOverview,
 } = require("./staticData");
-const { DEFAULT_PASSWORD, createDefaultSettings, normalizeSettingsPayload } = require("./settingsDefaults");
-const { hashPassword, verifyPassword } = require("./security");
-
-const defaultPasswordRecord = hashPassword(DEFAULT_PASSWORD);
+const { createDefaultSettings, normalizeSettingsPayload } = require("./settingsDefaults");
+const { hashPassword, verifyPassword, createId } = require("./security");
 
 let users = [
   {
@@ -20,8 +18,8 @@ let users = [
     petName: "Bruno",
     notes: "Appointments, health reminders, and support updates",
     settings: createDefaultSettings(),
-    passwordHash: defaultPasswordRecord.hash,
-    passwordSalt: defaultPasswordRecord.salt,
+    passwordHash: "",
+    passwordSalt: "",
   },
 ];
 
@@ -48,9 +46,10 @@ function getUserPets(userId) {
 }
 
 function addPet(userId, payload) {
+  const petId = createId("pet");
   const nextPet = {
-    id: `pet-${Date.now()}`,
-    petId: `pet-${Date.now()}`,
+    id: petId,
+    petId,
     userId,
     name: payload.name,
     type: payload.type,
@@ -107,7 +106,7 @@ function loginUser({ phone, name }) {
 
   if (!user) {
     user = {
-      id: `user-${users.length + 1}`,
+      id: createId("user"),
       name: name?.trim() || "Pet Parent",
       phone: normalizedPhone,
       city: "Kolkata",
@@ -115,8 +114,8 @@ function loginUser({ phone, name }) {
       petName: "",
       notes: "Appointments, health reminders, and support updates",
       settings: createDefaultSettings(),
-      passwordHash: defaultPasswordRecord.hash,
-      passwordSalt: defaultPasswordRecord.salt,
+      passwordHash: "",
+      passwordSalt: "",
     };
     users.push(user);
     getUserPets(user.id);
@@ -124,11 +123,6 @@ function loginUser({ phone, name }) {
 
   if (!user.settings) {
     user.settings = createDefaultSettings();
-  }
-
-  if (!user.passwordHash || !user.passwordSalt) {
-    user.passwordHash = defaultPasswordRecord.hash;
-    user.passwordSalt = defaultPasswordRecord.salt;
   }
 
   return user;
@@ -177,7 +171,11 @@ function changeUserPassword(userId, currentPassword, nextPassword) {
     return { ok: false, reason: "not_found" };
   }
 
-  if (!verifyPassword(currentPassword, users[index].passwordHash, users[index].passwordSalt)) {
+  if (
+    users[index].passwordHash &&
+    users[index].passwordSalt &&
+    !verifyPassword(currentPassword, users[index].passwordHash, users[index].passwordSalt)
+  ) {
     return { ok: false, reason: "invalid_current_password" };
   }
 
@@ -202,7 +200,7 @@ function deleteUserAccount(userId) {
 
 function createBooking(payload) {
   const booking = {
-    id: `booking-${bookings.length + 1}`,
+    id: createId("booking"),
     status: "confirmed",
     createdAt: new Date().toISOString(),
     ...payload,

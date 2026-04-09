@@ -8,27 +8,6 @@ import guaranteePet2 from "../assets/guarantee-pet-2.jpg";
 import guaranteePet3 from "../assets/guarantee-pet-3.jpg";
 import useUserStore from "../store/useUserStore";
 
-const serviceTiles = [
-  {
-    title: "Emergency Response",
-    subtitle: "Immediate dispatch, live triage, and priority care routing.",
-    cta: "Open",
-    to: "/app/booking?service=ambulance&mode=emergency",
-  },
-  {
-    title: "Clinical AI Assist",
-    subtitle: "Professional symptom guidance and smart next-step support.",
-    cta: "Launch",
-    to: "/app/ai-assistant?mode=triage",
-  },
-  {
-    title: "Luxury Grooming",
-    subtitle: "Spa resets, coat care, and comfort-first grooming options.",
-    cta: "View",
-    to: "/app/grooming",
-  },
-];
-
 const trustStats = [
   { label: "Fastest response lane", value: "10 min" },
   { label: "Unified care modules", value: "8+" },
@@ -218,15 +197,6 @@ export default function PostLoginHome() {
     "Pet Records",
     "Care Routing",
   ];
-
-  const navigateWithAuth = (to, { allowGuest = false } = {}) => {
-    if (user || allowGuest) {
-      navigate(to);
-      return;
-    }
-
-    navigate("/login");
-  };
 
   useEffect(() => {
     const updateTilt = (event) => {

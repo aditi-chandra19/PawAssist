@@ -9,10 +9,14 @@ async function connectDatabase() {
   }
 
   hasAttemptedConnection = true;
+  const isProduction = process.env.NODE_ENV === "production";
 
   const mongoUri = process.env.MONGODB_URI;
 
   if (!mongoUri) {
+    if (isProduction) {
+      throw new Error("MONGODB_URI is required in production.");
+    }
     console.log("MongoDB URI not provided. Using in-memory fallback store.");
     return false;
   }
@@ -28,6 +32,9 @@ async function connectDatabase() {
     console.log("MongoDB connected successfully.");
     return true;
   } catch (error) {
+    if (isProduction) {
+      throw new Error(`MongoDB connection failed in production: ${error.message}`);
+    }
     console.error("MongoDB connection failed. Falling back to in-memory store.");
     console.error(error.message);
     isMongoReady = false;

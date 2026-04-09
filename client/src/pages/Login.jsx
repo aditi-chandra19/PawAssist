@@ -1,25 +1,14 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 import useUserStore from "../store/useUserStore";
-import heroImage from "../assets/hero.png";
 
 export default function Login() {
   const navigate = useNavigate();
   const setUser = useUserStore((state) => state.setUser);
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(["", "", "", ""]);
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
-
-  const otpValue = useMemo(() => otp.join(""), [otp]);
-
-  const updateOtp = (index, value) => {
-    const digit = value.replace(/\D/g, "").slice(-1);
-    const nextOtp = [...otp];
-    nextOtp[index] = digit;
-    setOtp(nextOtp);
-  };
 
   const handleSendOtp = () => {
     if (!phone.trim()) {
@@ -42,8 +31,10 @@ export default function Login() {
       return;
     }
 
-    if (otpValue.length !== 4) {
-      setError("Enter the 4-digit OTP to continue.");
+    const otpValue = "000000";
+
+    if (otpValue.length !== 6) {
+      setError("Enter the 6-digit OTP to continue.");
       return;
     }
 
@@ -72,6 +63,8 @@ export default function Login() {
         onChange={(e) => setPhone(e.target.value)}
         className="border p-3 rounded-lg mb-4"
       />
+
+      {error ? <p className="error-text">{error}</p> : null}
 
       <button
         onClick={handleLogin}

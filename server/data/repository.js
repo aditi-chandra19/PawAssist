@@ -6,11 +6,28 @@ const {
   defaultPets,
   buildOverview,
 } = require("./staticData");
-const { DEFAULT_PASSWORD, createDefaultSettings, normalizeSettingsPayload } = require("./settingsDefaults");
-const { hashPassword, verifyPassword } = require("./security");
+const { createDefaultSettings, normalizeSettingsPayload } = require("./settingsDefaults");
+const { hashPassword, verifyPassword, createId } = require("./security");
 const User = require("../models/User");
 const Pet = require("../models/Pet");
 const Booking = require("../models/Booking");
+
+function toPublicUser(user) {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user.userId || user.id,
+    name: user.name,
+    phone: user.phone,
+    city: user.city,
+    email: user.email,
+    petName: user.petName,
+    notes: user.notes,
+    hasPassword: Boolean(user.passwordHash && user.passwordSalt),
+  };
+}
 
 function ensureSettingsState(user) {
   let changed = false;
@@ -24,13 +41,6 @@ function ensureSettingsState(user) {
       user.settings = normalized;
       changed = true;
     }
-  }
-
-  if (!user.passwordHash || !user.passwordSalt) {
-    const seed = hashPassword(DEFAULT_PASSWORD);
-    user.passwordHash = seed.hash;
-    user.passwordSalt = seed.salt;
-    changed = true;
   }
 
   return changed;
@@ -86,9 +96,8 @@ async function loginUser(payload) {
   let user = await User.findOne({ phone: normalizedPhone });
 
   if (!user) {
-    const seed = hashPassword(DEFAULT_PASSWORD);
     user = await User.create({
-      userId: `user-${Date.now()}`,
+      userId: createId("user"),
       phone: normalizedPhone,
       name: normalizedName || "Pet Parent",
       city: normalizedCity || "Kolkata",
@@ -96,8 +105,8 @@ async function loginUser(payload) {
       petName: normalizedPetName || "",
       notes: payload.notes?.trim() || "Appointments, health reminders, and support updates",
       settings: createDefaultSettings(),
-      passwordHash: seed.hash,
-      passwordSalt: seed.salt,
+      passwordHash: "",
+      passwordSalt: "",
     });
   } else {
     if (normalizedName && user.name !== normalizedName) {
@@ -119,15 +128,7 @@ async function loginUser(payload) {
 
   await ensureUserPets(user.userId);
 
-  return {
-    id: user.userId,
-    name: user.name,
-    phone: user.phone,
-    city: user.city,
-    email: user.email,
-    petName: user.petName,
-    notes: user.notes,
-  };
+  return toPublicUser(user);
 }
 
 async function getUserById(userId) {
@@ -145,15 +146,7 @@ async function getUserById(userId) {
     await user.save();
   }
 
-  return {
-    id: user.userId,
-    name: user.name,
-    phone: user.phone,
-    city: user.city,
-    email: user.email,
-    petName: user.petName,
-    notes: user.notes,
-  };
+  return toPublicUser(user);
 }
 
 async function updateUser(userId, patch) {
@@ -178,15 +171,7 @@ async function updateUser(userId, patch) {
 
   await user.save();
 
-  return {
-    id: user.userId,
-    name: user.name,
-    phone: user.phone,
-    city: user.city,
-    email: user.email,
-    petName: user.petName,
-    notes: user.notes,
-  };
+  return toPublicUser(user);
 }
 
 async function getUserSettings(userId) {
@@ -238,7 +223,11 @@ async function changeUserPassword(userId, currentPassword, nextPassword) {
 
   ensureSettingsState(user);
 
-  if (!verifyPassword(currentPassword, user.passwordHash, user.passwordSalt)) {
+  if (
+    user.passwordHash &&
+    user.passwordSalt &&
+    !verifyPassword(currentPassword, user.passwordHash, user.passwordSalt)
+  ) {
     return { ok: false, reason: "invalid_current_password" };
   }
 
@@ -301,7 +290,7 @@ async function addPet(userId, payload) {
 
   const pet = await Pet.create({
     userId,
-    petId: `pet-${Date.now()}`,
+    petId: createId("pet"),
     name: payload.name,
     type: payload.type,
     breed: payload.breed || payload.type,
@@ -376,7 +365,7 @@ async function createBooking(payload) {
   }
 
   const booking = await Booking.create({
-    bookingId: `booking-${Date.now()}`,
+    bookingId: createId("booking"),
     status: "confirmed",
     ...payload,
   });

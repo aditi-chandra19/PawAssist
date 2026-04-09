@@ -12,10 +12,15 @@ export default function useAppData() {
 
     const load = async () => {
       setLoading(true);
-      const overview = await getAppOverview(user);
-      if (isMounted) {
-        setData(overview);
-        setLoading(false);
+      try {
+        const overview = await getAppOverview(user);
+        if (isMounted) {
+          setData(overview);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 

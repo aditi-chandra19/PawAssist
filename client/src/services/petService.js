@@ -6,32 +6,28 @@ const requireApi = async () => {
   }
 };
 
-export const createPet = async (userId, payload) => {
-  if (!userId) {
-    throw new Error("User id is required to create a pet.");
-  }
-
+export const createPet = async (payload) => {
   await requireApi();
-  const response = await API.post(`/pets/${userId}`, payload);
+  const response = await API.post("/pets", payload);
   return response.data;
 };
 
-export const updatePet = async (userId, petId, payload) => {
-  if (!userId || !petId) {
-    throw new Error("User id and pet id are required to update a pet.");
+export const updatePet = async (petId, payload) => {
+  if (!petId) {
+    throw new Error("Pet id is required to update a pet.");
   }
 
   await requireApi();
-  const response = await API.put(`/pets/${userId}/${petId}`, payload);
+  const response = await API.put(`/pets/${petId}`, payload);
   return response.data;
 };
 
-export const deletePet = async (userId, petId) => {
-  if (!userId || !petId) {
-    throw new Error("User id and pet id are required to delete a pet.");
+export const deletePet = async (petId) => {
+  if (!petId) {
+    throw new Error("Pet id is required to delete a pet.");
   }
 
   await requireApi();
-  const response = await API.delete(`/pets/${userId}/${petId}`);
+  const response = await API.delete(`/pets/${petId}`);
   return response.data;
 };

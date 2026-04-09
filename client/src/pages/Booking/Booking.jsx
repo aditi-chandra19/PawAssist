@@ -10,6 +10,8 @@ export default function Booking() {
 
   const [selectedService, setSelectedService] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  const [selectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedTime] = useState("10:00 AM");
 
 const handleConfirmBooking = async () => {
   if (!selectedService || !selectedDate || !selectedTime || !selectedProvider) {
@@ -66,7 +68,7 @@ const handleConfirmBooking = async () => {
 
       {/* Button */}
       <button
-        onClick={handleConfirm}
+        onClick={handleConfirmBooking}
         disabled={!selectedService || !selectedProvider}
         style={{
           marginTop: "20px",

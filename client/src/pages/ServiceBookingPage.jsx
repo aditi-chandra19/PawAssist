@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import useAppData from "../services/useAppData";
-import useUserStore from "../store/useUserStore";
 import { createBooking } from "../services/bookingService";
 
 const bookingSteps = [
@@ -98,27 +97,25 @@ const getMatchingProviders = (providers, service) => {
 export default function ServiceBookingPage() {
   const [searchParams] = useSearchParams();
   const { data, loading, refresh } = useAppData();
-  const user = useUserStore((state) => state.user);
   const requestedService = searchParams.get("service") || "vet-visit";
   const mode = searchParams.get("mode") || "default";
+  const requestedProvider = searchParams.get("provider") || "";
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedService, setSelectedService] = useState(requestedService);
   const [selectedPet, setSelectedPet] = useState("");
   const [selectedDate, setSelectedDate] = useState(createDefaultDate());
   const [selectedTime, setSelectedTime] = useState(mode === "emergency" ? emergencySlots[0] : defaultSlots[0]);
-  const [selectedProvider, setSelectedProvider] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState(requestedProvider);
   const [providerAvailability, setProviderAvailability] = useState("all");
   const [providerSort, setProviderSort] = useState("rating");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allServices = data?.services || [];
-  const allPets = (data?.pets || []).map(normalizePet);
-  const allProviders = data?.providers || [];
+  const allPets = useMemo(() => (data?.pets || []).map(normalizePet), [data?.pets]);
 
   const availableServices = useMemo(() => {
     const blockedIds = ["support-247", "lost-found", "pet-insurance"];
-    const filtered = allServices.filter((service) => !blockedIds.includes(service.id));
+    const filtered = (data?.services || []).filter((service) => !blockedIds.includes(service.id));
 
     if (mode === "emergency" || requestedService === "ambulance") {
       return filtered.filter((service) => service.id === "ambulance");
@@ -143,14 +140,14 @@ export default function ServiceBookingPage() {
       "pet-hotel",
       "pet-taxi",
     ].includes(service.id));
-  }, [allServices, mode, requestedService]);
+  }, [data?.services, mode, requestedService]);
 
   const selectedServiceDetails = availableServices.find((service) => service.id === selectedService) || availableServices[0];
   const timeSlots = mode === "emergency" || selectedServiceDetails?.id === "ambulance" ? emergencySlots : defaultSlots;
 
   const providerPool = useMemo(
-    () => getMatchingProviders(allProviders, selectedServiceDetails),
-    [allProviders, selectedServiceDetails],
+    () => getMatchingProviders(data?.providers || [], selectedServiceDetails),
+    [data?.providers, selectedServiceDetails],
   );
 
   const filteredProviders = useMemo(() => {
@@ -188,6 +185,10 @@ export default function ServiceBookingPage() {
   const total = Number((serviceFee + gst).toFixed(2));
 
   useEffect(() => {
+    setSelectedService(requestedService);
+  }, [requestedService]);
+
+  useEffect(() => {
     if (availableServices[0] && !availableServices.some((service) => service.id === selectedService)) {
       setSelectedService(availableServices[0].id);
     }
@@ -204,6 +205,12 @@ export default function ServiceBookingPage() {
       setSelectedTime(timeSlots[0]);
     }
   }, [selectedTime, timeSlots]);
+
+  useEffect(() => {
+    if (requestedProvider && providerPool.some((provider) => provider.id === requestedProvider)) {
+      setSelectedProvider(requestedProvider);
+    }
+  }, [providerPool, requestedProvider]);
 
   useEffect(() => {
     if (providerPool[0] && !providerPool.some((provider) => provider.id === selectedProvider)) {
@@ -250,7 +257,6 @@ export default function ServiceBookingPage() {
 
     try {
       await createBooking({
-        userId: user?.id || "demo-user",
         serviceId: selectedServiceDetails.id,
         providerId: selectedProviderDetails.id,
         petId: selectedPetDetails.id,

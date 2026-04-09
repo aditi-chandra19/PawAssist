@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authService";
+import { loginOrRegisterWithOtp, requestOtp } from "../services/authService";
 import useUserStore from "../store/useUserStore";
 
 const registerHeroImage =
@@ -27,29 +27,136 @@ const registerHighlights = [
 export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const setUser = useUserStore((state) => state.setUser);
+  const setSession = useUserStore((state) => state.setSession);
   const [form, setForm] = useState({
     name: "",
     phone: "",
     petName: "",
     city: "",
   });
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otpSent, setOtpSent] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [issuedOtp, setIssuedOtp] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const otpRefs = useRef([]);
   const redirectTo = "/app/dashboard";
+  const normalizedPhone = `+91${form.phone}`;
+  const otpValue = useMemo(() => otp.join(""), [otp]);
 
   const updateField = (field) => (event) => {
+    const nextValue =
+      field === "phone"
+        ? event.target.value.replace(/\D/g, "").slice(0, 10)
+        : event.target.value;
+
     setForm((current) => ({
       ...current,
-      [field]: event.target.value,
+      [field]: nextValue,
     }));
+    if (field === "phone") {
+      setOtpSent(false);
+      setOtp(["", "", "", "", "", ""]);
+      setStatusMessage("");
+      setIssuedOtp("");
+    }
+  };
+
+  const focusOtpIndex = (index) => {
+    otpRefs.current[index]?.focus();
+    otpRefs.current[index]?.select();
+  };
+
+  const updateOtp = (index, rawValue) => {
+    const digits = rawValue.replace(/\D/g, "");
+
+    if (!digits) {
+      setOtp((current) => {
+        const next = [...current];
+        next[index] = "";
+        return next;
+      });
+      return;
+    }
+
+    const nextOtp = [...otp];
+    digits.slice(0, otp.length - index).split("").forEach((digit, offset) => {
+      nextOtp[index + offset] = digit;
+    });
+    setOtp(nextOtp);
+    focusOtpIndex(Math.min(index + digits.length, otp.length - 1));
+  };
+
+  const handleOtpKeyDown = (index, event) => {
+    if (event.key === "Backspace" && !otp[index] && index > 0) {
+      focusOtpIndex(index - 1);
+      return;
+    }
+
+    if (event.key === "ArrowLeft" && index > 0) {
+      event.preventDefault();
+      focusOtpIndex(index - 1);
+      return;
+    }
+
+    if (event.key === "ArrowRight" && index < otp.length - 1) {
+      event.preventDefault();
+      focusOtpIndex(index + 1);
+    }
+  };
+
+  const handleOtpPaste = (event) => {
+    event.preventDefault();
+    const pastedDigits = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, otp.length);
+
+    if (!pastedDigits) {
+      return;
+    }
+
+    const nextOtp = [...otp];
+    pastedDigits.split("").forEach((digit, index) => {
+      nextOtp[index] = digit;
+    });
+    setOtp(nextOtp);
+    focusOtpIndex(Math.min(pastedDigits.length - 1, otp.length - 1));
+  };
+
+  const handleSendOtp = async () => {
+    if (!form.name.trim() || form.phone.length !== 10) {
+      setError("Enter your name and 10-digit phone number to continue.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+    setStatusMessage("");
+    setIssuedOtp("");
+    setOtp(["", "", "", "", "", ""]);
+
+    try {
+      const response = await requestOtp({ phone: normalizedPhone });
+      setOtpSent(true);
+      setStatusMessage("OTP sent for this phone number.");
+      setIssuedOtp(response.otp || "");
+      window.setTimeout(() => focusOtpIndex(0), 0);
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to send OTP right now.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRegister = async (event) => {
     event.preventDefault();
 
-    if (!form.name.trim() || !form.phone.trim()) {
-      setError("Enter your name and phone number to continue.");
+    if (!otpSent) {
+      await handleSendOtp();
+      return;
+    }
+
+    if (otpValue.length !== 6) {
+      setError("Enter the 6-digit OTP to continue.");
       return;
     }
 
@@ -57,17 +164,22 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const response = await loginUser({
+      const response = await loginOrRegisterWithOtp({
         name: form.name.trim(),
-        phone: form.phone.trim(),
+        phone: normalizedPhone,
         petName: form.petName.trim(),
         city: form.city.trim(),
+        otp: otpValue,
       });
 
-      setUser(response.user);
+      setSession({
+        user: response.user,
+        token: response.token,
+        expiresAt: response.expiresAt,
+      });
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      setError(err?.response?.data?.message || "Registration failed. Please try again.");
       console.error("Register Error:", err);
     } finally {
       setIsSubmitting(false);
@@ -132,7 +244,8 @@ export default function RegisterPage() {
               <div className="paw-input-shell">
                 <input
                   type="tel"
-                  placeholder="+91 98765 43210"
+                  inputMode="numeric"
+                  placeholder="98765 43210"
                   value={form.phone}
                   onChange={updateField("phone")}
                 />
@@ -163,10 +276,46 @@ export default function RegisterPage() {
               </div>
             </label>
 
+            {otpSent ? (
+              <>
+                <label className="paw-field">
+                  <span>Enter OTP</span>
+                  <div className="paw-otp-row">
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(event) => updateOtp(index, event.target.value)}
+                        onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                        onFocus={() => focusOtpIndex(index)}
+                        onPaste={handleOtpPaste}
+                        ref={(node) => {
+                          otpRefs.current[index] = node;
+                        }}
+                        className={`paw-otp-box${digit ? " active" : ""}`}
+                      />
+                    ))}
+                  </div>
+                </label>
+
+                <p className="paw-resend">
+                  Didn&apos;t receive code?{" "}
+                  <button type="button" onClick={handleSendOtp} disabled={isSubmitting}>
+                    {isSubmitting ? "Sending..." : "Resend"}
+                  </button>
+                </p>
+              </>
+            ) : null}
+
+            {issuedOtp ? <p className="success-text">Demo OTP for {normalizedPhone}: <strong>{issuedOtp}</strong></p> : null}
+            {statusMessage ? <p className="success-text">{statusMessage}</p> : null}
             {error ? <p className="error-text">{error}</p> : null}
 
             <button type="submit" className="paw-gradient-button" disabled={isSubmitting}>
-              {isSubmitting ? "Creating Account..." : "Create Account"}
+              {otpSent ? (isSubmitting ? "Verifying..." : "Verify & Create Account") : (isSubmitting ? "Sending OTP..." : "Create Account")}
             </button>
           </form>
 

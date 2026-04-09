@@ -7,6 +7,7 @@ function App() {
   const themeMode = useSettingsStore((state) => state.themeMode);
   const hydrateFromServer = useSettingsStore((state) => state.hydrateFromServer);
   const user = useUserStore((state) => state.user);
+  const token = useUserStore((state) => state.token);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -23,12 +24,12 @@ function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!user?.id || !token) {
       return;
     }
 
     void hydrateFromServer(user.id);
-  }, [hydrateFromServer, user?.id]);
+  }, [hydrateFromServer, token, user?.id]);
 
   return <AppRoutes />;
 }

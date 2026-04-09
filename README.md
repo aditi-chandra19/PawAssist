@@ -149,28 +149,28 @@ This opens two terminals:
 
 ## Environment Variables
 
-The server includes this example configuration:
+Example env files:
 
-```env
-PORT=5001
-MONGODB_URI=mongodb://127.0.0.1:27017/pawassist
-MONGODB_DB=pawassist
-```
+- `server/.env.example`
+- `client/.env.example`
+- `client/.env.production.example`
 
-If `MONGODB_URI` is missing or MongoDB is unavailable, the server automatically uses the in-memory fallback store.
+Important:
+
+- Do not commit real `.env` files.
+- Production requires real values for MongoDB, auth secret, frontend origin, and frontend API URL.
+- See `DEPLOYMENT.md` for the full production checklist and secret-safety steps.
 
 ## API Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/api/health` | Health check and backend mode |
-| POST | `/api/auth/login` | Login or create user |
-| GET | `/api/auth/profile/:userId` | Fetch profile |
-| PUT | `/api/auth/profile/:userId` | Update profile |
+| POST | `/api/auth/request-otp` | Request login OTP |
+| POST | `/api/auth/login-with-otp` | Verify OTP and create session |
+| GET | `/api/auth/me` | Get current authenticated user |
 | POST | `/api/bookings` | Create booking |
 | GET | `/api/bookings` | Get bookings |
-| GET | `/api/services` | Get available services |
-| GET | `/api/services/providers` | Get providers |
 | GET | `/api/app/overview` | Get dashboard overview data |
 
 ## Future Improvements

@@ -23,8 +23,9 @@ import useUserStore from "../store/useUserStore";
 
 function ProtectedRoutes() {
   const user = useUserStore((state) => state.user);
+  const token = useUserStore((state) => state.token);
 
-  if (!user) {
+  if (!user || !token) {
     return <Navigate to="/login" replace />;
   }
 

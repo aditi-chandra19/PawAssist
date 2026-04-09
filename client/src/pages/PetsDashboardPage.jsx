@@ -248,9 +248,9 @@ export default function PetsDashboardPage() {
       const payload = buildPetPayload();
 
       if (selectedPet?.id) {
-        await updatePet(user.id, selectedPet.id, payload);
+        await updatePet(selectedPet.id, payload);
       } else {
-        await createPet(user.id, payload);
+        await createPet(payload);
       }
 
       await refresh();
@@ -270,7 +270,7 @@ export default function PetsDashboardPage() {
     setErrorMessage("");
 
     try {
-      await deletePet(user.id, pet.id);
+      await deletePet(pet.id);
       await refresh();
 
       if (selectedPet?.id === pet.id) {

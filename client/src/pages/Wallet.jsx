@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowDownLeft, FiArrowUpRight, FiCalendar, FiCreditCard, FiDownload, FiGift, FiPlus, FiSearch, FiStar, FiX } from "react-icons/fi";
-import useSettingsStore from "../store/useSettingsStore";
 
 const startingMethods = [
   { id: "gpay", name: "Google Pay", detail: "UPI •••• 9876", kind: "UPI", defaultMethod: true },
@@ -53,7 +53,14 @@ const createDownload = (filename, content) => {
 };
 
 export default function Wallet() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "rewards" || searchParams.get("tab") === "offers"
+    ? "rewards"
+    : searchParams.get("tab") === "transactions"
+      ? "transactions"
+      : "overview";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [walletBalance, setWalletBalance] = useState(2450);
   const [rewardPoints, setRewardPoints] = useState(125);
   const [methods, setMethods] = useState(startingMethods);
@@ -64,17 +71,30 @@ export default function Wallet() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [addAmount, setAddAmount] = useState("500");
+  const [transactionFilter, setTransactionFilter] = useState("all");
+  const [dateRange, setDateRange] = useState("all");
 
   const filteredTransactions = useMemo(() => {
     const query = searchValue.trim().toLowerCase();
-    if (!query) {
-      return transactions;
-    }
+    return transactions.filter((item) => {
+      const matchesQuery = !query
+        || [item.title, item.category, item.method, item.invoice].some((value) => value.toLowerCase().includes(query));
+      const matchesType =
+        transactionFilter === "all"
+          ? true
+          : transactionFilter === "credits"
+            ? item.amount > 0
+            : item.amount < 0;
+      const matchesRange =
+        dateRange === "all"
+          ? true
+          : dateRange === "recent"
+            ? ["Apr 7, 2026", "Apr 6, 2026", "Apr 5, 2026"].includes(item.date)
+            : ["Apr 4, 2026", "Apr 3, 2026"].includes(item.date);
 
-    return transactions.filter((item) =>
-      [item.title, item.category, item.method, item.invoice].some((value) => value.toLowerCase().includes(query)),
-    );
-  }, [searchValue, transactions]);
+      return matchesQuery && matchesType && matchesRange;
+    });
+  }, [dateRange, searchValue, transactionFilter, transactions]);
 
   const totalSpent = transactions
     .filter((item) => item.amount < 0)
@@ -83,6 +103,26 @@ export default function Wallet() {
   const totalSavings = 1900;
 
   const announce = (message) => setStatusMessage(message);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams(tab === "overview" ? {} : { tab });
+  };
+
+  const handleAddMethod = () => {
+    navigate("/app/settings?tab=payment");
+  };
+
+  const handleCycleFilter = () => {
+    setTransactionFilter((current) =>
+      current === "all" ? "debits" : current === "debits" ? "credits" : "all",
+    );
+  };
+
+  const handleCycleDateRange = () => {
+    setDateRange((current) =>
+      current === "all" ? "recent" : current === "recent" ? "earlier" : "all",
+    );
+  };
 
   const downloadTransaction = (item) => {
     createDownload(
@@ -252,9 +292,9 @@ export default function Wallet() {
       </section>
 
       <section className="wallet-hub-tabs">
-        <button type="button" className={activeTab === "overview" ? "active" : ""} onClick={() => setActiveTab("overview")}>Overview</button>
-        <button type="button" className={activeTab === "transactions" ? "active" : ""} onClick={() => setActiveTab("transactions")}>Transactions</button>
-        <button type="button" className={activeTab === "rewards" ? "active" : ""} onClick={() => setActiveTab("rewards")}>Rewards & Offers</button>
+              <button type="button" className={activeTab === "overview" ? "active" : ""} onClick={() => handleTabChange("overview")}>Overview</button>
+              <button type="button" className={activeTab === "transactions" ? "active" : ""} onClick={() => handleTabChange("transactions")}>Transactions</button>
+              <button type="button" className={activeTab === "rewards" ? "active" : ""} onClick={() => handleTabChange("rewards")}>Rewards & Offers</button>
       </section>
 
       {activeTab === "overview" ? (
@@ -316,7 +356,7 @@ export default function Wallet() {
             <section className="wallet-hub-panel">
               <div className="wallet-hub-panel-head">
                 <h2>Payment Methods</h2>
-                <button type="button" onClick={() => announce("Add payment method flow can be connected next.")}>+ Add</button>
+                <button type="button" onClick={handleAddMethod}>+ Add</button>
               </div>
               <div className="wallet-hub-method-list">
                 {methods.map((method) => (
@@ -353,8 +393,13 @@ export default function Wallet() {
               <FiSearch />
               <input value={searchValue} onChange={(event) => setSearchValue(event.target.value)} placeholder="Search transactions..." />
             </div>
-            <button type="button" onClick={() => announce("Filter shortcuts can be extended next.")}>Filter</button>
-            <button type="button" onClick={() => announce("Date range picker can be connected next.")}><FiCalendar />Date Range</button>
+            <button type="button" onClick={handleCycleFilter}>
+              Filter: {transactionFilter === "all" ? "All" : transactionFilter === "debits" ? "Debits" : "Credits"}
+            </button>
+            <button type="button" onClick={handleCycleDateRange}>
+              <FiCalendar />
+              {dateRange === "all" ? "All Dates" : dateRange === "recent" ? "Recent" : "Earlier"}
+            </button>
           </section>
 
           <section className="wallet-hub-panel">
