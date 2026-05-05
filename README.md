@@ -185,6 +185,4 @@ Important:
 - Add Docker support
 - Add admin/provider dashboards
 
-## License
 
-This repository currently references MIT-style usage in the README, but no root `LICENSE` file is present yet. Add one if you want GitHub to show the license clearly.
