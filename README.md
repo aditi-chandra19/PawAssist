@@ -1,4 +1,3 @@
-# PawAssist
 
 Your all-in-one pet care companion.
 
