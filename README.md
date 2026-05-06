@@ -1,3 +1,4 @@
+<img width="355" height="464" alt="image" src="https://github.com/user-attachments/assets/8a9ea4d5-66dd-48c2-8e63-31930816543d" />
 
 Your all-in-one pet care companion.
 
