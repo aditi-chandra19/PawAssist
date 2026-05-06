@@ -160,6 +160,7 @@ Important:
 - Do not commit real `.env` files.
 - Production requires real values for MongoDB, auth secret, frontend origin, and frontend API URL.
 - See `DEPLOYMENT.md` for the full production checklist and secret-safety steps.
+- For a recommended hosted setup, use Vercel for `client/` and Render for `server/`.
 
 ## API Reference
 

@@ -36,6 +36,7 @@ server/.env
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.vercel/
 *.suo
 *.ntvs*
 *.njsproj

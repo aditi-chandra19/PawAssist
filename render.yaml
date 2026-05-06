@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pawassist-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: MONGODB_DB
+        value: pawassist
+      - key: AUTH_TOKEN_TTL_SECONDS
+        value: "43200"
+      - key: AUTH_TOKEN_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

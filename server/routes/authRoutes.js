@@ -1,5 +1,4 @@
 const router = require("express").Router();
-const { createOtpSession, OTP_TTL_MS, verifyOtpSession } = require("../data/otpStore");
 const {
   loginUser,
   updateUser,
@@ -16,17 +15,11 @@ const { requireAuth, getAuthSecret } = require("../middleware/auth");
 const { createRateLimiter } = require("../middleware/rateLimit");
 
 const authWindowMs = 10 * 60 * 1000;
-const otpRequestLimiter = createRateLimiter({
-  windowMs: authWindowMs,
-  maxRequests: 5,
-  message: "Too many OTP requests. Please wait a few minutes before trying again.",
-  keyGenerator: (req) => `${req.ip}:otp:${String(req.body?.phone || "").trim() || "unknown"}`,
-});
-const otpVerifyLimiter = createRateLimiter({
+const authRequestLimiter = createRateLimiter({
   windowMs: authWindowMs,
   maxRequests: 10,
-  message: "Too many verification attempts. Please request a new OTP and try again.",
-  keyGenerator: (req) => `${req.ip}:verify:${String(req.body?.phone || "").trim() || "unknown"}`,
+  message: "Too many authentication attempts. Please wait a few minutes before trying again.",
+  keyGenerator: (req) => `${req.ip}:auth:${String(req.body?.phone || "").trim() || "unknown"}`,
 });
 
 function isValidPhone(phone) {
@@ -52,7 +45,17 @@ function buildSession(user) {
   };
 }
 
-router.post("/request-otp", otpRequestLimiter, async (req, res) => {
+async function respondWithUserSession(res, payload) {
+  const user = await loginUser(payload);
+
+  return res.json({
+    ...buildSession(user),
+    overview: await getOverview(user.id),
+    bookings: await getBookings(user.id),
+  });
+}
+
+router.post("/request-otp", authRequestLimiter, async (req, res) => {
   const { phone } = req.body || {};
   const normalizedPhone = String(phone || "").trim();
 
@@ -61,59 +64,72 @@ router.post("/request-otp", otpRequestLimiter, async (req, res) => {
   }
 
   try {
-    const session = createOtpSession(normalizedPhone);
-    const isProduction = process.env.NODE_ENV === "production";
-
-    if (!isProduction) {
-      console.log(`PawAssist dev OTP for ${session.phone}: ${session.code}`);
-    }
-
     return res.json({
       success: true,
-      phone: session.phone,
-      expiresInMs: OTP_TTL_MS,
-      message: "OTP generated successfully.",
-      otp: isProduction ? undefined : session.code,
+      phone: normalizedPhone,
+      expiresInMs: 0,
+      message: "OTP is no longer required. Continue to log in directly.",
+      otp: "000000",
     });
   } catch (error) {
-    return res.status(500).json({ message: "Unable to generate OTP.", error: error.message });
+    return res.status(500).json({ message: "Unable to continue right now.", error: error.message });
   }
 });
 
-router.post("/login-with-otp", otpVerifyLimiter, async (req, res) => {
-  const { phone, otp, name, city, petName } = req.body || {};
+router.post("/login", authRequestLimiter, async (req, res) => {
+  const { phone } = req.body || {};
   const normalizedPhone = String(phone || "").trim();
 
   if (!isValidPhone(normalizedPhone)) {
     return res.status(400).json({ message: "Enter a valid phone number in international format." });
   }
 
-  if (!String(otp || "").trim()) {
-    return res.status(400).json({ message: "OTP is required." });
+  try {
+    return await respondWithUserSession(res, { phone: normalizedPhone });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to log in user.", error: error.message });
+  }
+});
+
+router.post("/register", authRequestLimiter, async (req, res) => {
+  const { phone, name, city, petName } = req.body || {};
+  const normalizedPhone = String(phone || "").trim();
+  const normalizedName = String(name || "").trim();
+
+  if (!isValidPhone(normalizedPhone)) {
+    return res.status(400).json({ message: "Enter a valid phone number in international format." });
   }
 
-  const verification = verifyOtpSession(normalizedPhone, otp);
-
-  if (!verification.ok) {
-    const messageByReason = {
-      missing: "Request a new OTP before trying to log in.",
-      expired: "OTP expired. Request a new one.",
-      invalid: "Incorrect OTP. Please try again.",
-      locked: "Too many incorrect OTP attempts. Request a new code.",
-    };
-
-    return res.status(400).json({
-      message: messageByReason[verification.reason] || "Unable to verify OTP.",
-    });
+  if (!normalizedName) {
+    return res.status(400).json({ message: "Name is required." });
   }
 
   try {
-    const user = await loginUser({ phone: normalizedPhone, name, city, petName });
+    return await respondWithUserSession(res, {
+      phone: normalizedPhone,
+      name: normalizedName,
+      city,
+      petName,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to register user.", error: error.message });
+  }
+});
 
-    return res.json({
-      ...buildSession(user),
-      overview: await getOverview(user.id),
-      bookings: await getBookings(user.id),
+router.post("/login-with-otp", authRequestLimiter, async (req, res) => {
+  const { phone, name, city, petName } = req.body || {};
+  const normalizedPhone = String(phone || "").trim();
+
+  if (!isValidPhone(normalizedPhone)) {
+    return res.status(400).json({ message: "Enter a valid phone number in international format." });
+  }
+
+  try {
+    return await respondWithUserSession(res, {
+      phone: normalizedPhone,
+      name,
+      city,
+      petName,
     });
   } catch (error) {
     return res.status(500).json({ message: "Unable to log in user.", error: error.message });
