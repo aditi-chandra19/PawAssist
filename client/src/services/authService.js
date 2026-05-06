@@ -1,57 +1,74 @@
 import API, { allowLocalFallback, canUseApi } from "./api";
 import { buildFallbackOverview } from "./fallbackData";
 
-export const loginUser = async ({ phone, otp, name, city, petName }) => {
+const buildLocalSession = ({ phone, name, city, petName }) => {
+  const user = {
+    id: `local-user-${phone}`,
+    name: name?.trim() || "Pet Parent",
+    phone,
+    city: city?.trim() || "Kolkata",
+    petName: petName?.trim() || "",
+  };
+
+  return {
+    user,
+    token: `local-session-${phone}`,
+    expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+    overview: buildFallbackOverview(user),
+    bookings: [],
+  };
+};
+
+export const loginUser = async ({ phone }) => {
   try {
     if (!(await canUseApi())) {
       throw new Error("API unavailable");
     }
 
-    const response = await API.post("/auth/login-with-otp", { phone, otp, name, city, petName });
+    const response = await API.post("/auth/login", { phone });
     return response.data;
   } catch {
     if (!allowLocalFallback) {
       throw new Error("Authentication service unavailable.");
     }
 
-    const user = {
-      id: `local-user-${phone}`,
-      name: name?.trim() || "Pet Parent",
-      phone,
-      city: city?.trim() || "Kolkata",
-      petName: petName?.trim() || "",
-    };
+    return buildLocalSession({ phone });
+  }
+};
 
-    return {
-      user,
-      overview: buildFallbackOverview(user),
-    };
+export const registerUser = async ({ phone, name, city, petName }) => {
+  try {
+    if (!(await canUseApi())) {
+      throw new Error("API unavailable");
+    }
+
+    const response = await API.post("/auth/register", { phone, name, city, petName });
+    return response.data;
+  } catch {
+    if (!allowLocalFallback) {
+      throw new Error("Authentication service unavailable.");
+    }
+
+    return buildLocalSession({ phone, name, city, petName });
   }
 };
 
 export const requestOtp = async ({ phone }) => {
   if (!(await canUseApi())) {
-    throw new Error("API unavailable");
+    return {
+      success: true,
+      phone,
+      expiresInMs: 0,
+      message: "OTP is no longer required. Continue to log in directly.",
+      otp: "000000",
+    };
   }
 
   const response = await API.post("/auth/request-otp", { phone });
   return response.data;
 };
 
-export const loginWithOtp = async ({ phone, otp }) => {
-  if (!(await canUseApi())) {
-    throw new Error("API unavailable");
-  }
+export const loginWithOtp = async ({ phone }) => loginUser({ phone });
 
-  const response = await API.post("/auth/login-with-otp", { phone, otp });
-  return response.data;
-};
-
-export const loginOrRegisterWithOtp = async ({ phone, otp, name, city, petName }) => {
-  if (!(await canUseApi())) {
-    throw new Error("API unavailable");
-  }
-
-  const response = await API.post("/auth/login-with-otp", { phone, otp, name, city, petName });
-  return response.data;
-};
+export const loginOrRegisterWithOtp = async ({ phone, name, city, petName }) =>
+  registerUser({ phone, name, city, petName });
