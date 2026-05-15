@@ -11,6 +11,7 @@ export const apiConfigurationError =
 
 export const API_BASE_URL = configuredApiBaseUrl || "http://localhost:5001/api";
 export const allowLocalFallback = !import.meta.env.PROD;
+export const API_TIMEOUT_MS = import.meta.env.PROD ? 15000 : 2500;
 let apiStatus = "unknown";
 let lastCheckedAt = 0;
 let inFlightHealthCheck = null;
@@ -18,7 +19,7 @@ let failedChecks = 0;
 
 const API = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 2500,
+  timeout: API_TIMEOUT_MS,
 });
 
 API.interceptors.request.use((config) => {
@@ -48,7 +49,12 @@ API.interceptors.response.use(
 );
 
 export const getApiErrorMessage = (error, fallbackMessage = "Request failed.") =>
-  error?.response?.data?.message || apiConfigurationError || error?.message || fallbackMessage;
+  error?.response?.data?.message ||
+  apiConfigurationError ||
+  (error?.code === "ECONNABORTED"
+    ? `The server took longer than ${Math.round(API_TIMEOUT_MS / 1000)} seconds to respond. Please try again.`
+    : error?.message) ||
+  fallbackMessage;
 
 export const canUseApi = async () => {
   if (apiConfigurationError) {
