@@ -1,8 +1,15 @@
 import axios from "axios";
 import useUserStore from "../store/useUserStore";
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:5001/api";
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || "";
+const pointsToLocalhost = /(^|\/\/)(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(configuredApiBaseUrl);
+
+export const apiConfigurationError =
+  import.meta.env.PROD && (!configuredApiBaseUrl || pointsToLocalhost)
+    ? "Frontend deployment is missing a valid VITE_API_BASE_URL. Point it to the deployed backend /api URL and redeploy."
+    : "";
+
+export const API_BASE_URL = configuredApiBaseUrl || "http://localhost:5001/api";
 export const allowLocalFallback = !import.meta.env.PROD;
 let apiStatus = "unknown";
 let lastCheckedAt = 0;
@@ -40,7 +47,24 @@ API.interceptors.response.use(
   },
 );
 
+export const getApiErrorMessage = (error, fallbackMessage = "Request failed.") =>
+  error?.response?.data?.message || apiConfigurationError || error?.message || fallbackMessage;
+
 export const canUseApi = async () => {
+  if (apiConfigurationError) {
+    apiStatus = "down";
+    lastCheckedAt = Date.now();
+    failedChecks += 1;
+    return false;
+  }
+
+  // In production we should not block real requests behind a short preflight.
+  // Render cold starts or normal network jitter can exceed the health timeout
+  // even when the API is actually healthy.
+  if (import.meta.env.PROD) {
+    return true;
+  }
+
   const now = Date.now();
   const upCooldown = 30000;
   const downCooldown = Math.min(180000, 15000 * Math.max(1, failedChecks));

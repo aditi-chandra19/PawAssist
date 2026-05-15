@@ -1,4 +1,4 @@
-import API, { allowLocalFallback, canUseApi } from "./api";
+import API, { allowLocalFallback, canUseApi, getApiErrorMessage } from "./api";
 import { buildFallbackOverview } from "./fallbackData";
 
 const buildLocalSession = ({ phone, name, city, petName }) => {
@@ -22,14 +22,14 @@ const buildLocalSession = ({ phone, name, city, petName }) => {
 export const loginUser = async ({ phone }) => {
   try {
     if (!(await canUseApi())) {
-      throw new Error("API unavailable");
+      throw new Error(getApiErrorMessage(null, "Authentication service unavailable."));
     }
 
     const response = await API.post("/auth/login", { phone });
     return response.data;
-  } catch {
+  } catch (error) {
     if (!allowLocalFallback) {
-      throw new Error("Authentication service unavailable.");
+      throw new Error(getApiErrorMessage(error, "Authentication service unavailable."));
     }
 
     return buildLocalSession({ phone });
@@ -39,14 +39,14 @@ export const loginUser = async ({ phone }) => {
 export const registerUser = async ({ phone, name, city, petName }) => {
   try {
     if (!(await canUseApi())) {
-      throw new Error("API unavailable");
+      throw new Error(getApiErrorMessage(null, "Authentication service unavailable."));
     }
 
     const response = await API.post("/auth/register", { phone, name, city, petName });
     return response.data;
-  } catch {
+  } catch (error) {
     if (!allowLocalFallback) {
-      throw new Error("Authentication service unavailable.");
+      throw new Error(getApiErrorMessage(error, "Authentication service unavailable."));
     }
 
     return buildLocalSession({ phone, name, city, petName });

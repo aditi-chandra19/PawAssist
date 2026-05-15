@@ -5,14 +5,15 @@ import useUserStore from "../store/useUserStore";
 
 export default function Login() {
   const navigate = useNavigate();
-  const setUser = useUserStore((state) => state.setUser);
+  const setSession = useUserStore((state) => state.setSession);
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
+  const normalizedPhone = `+91${phone}`;
 
   const handleSendOtp = () => {
-    if (!phone.trim()) {
-      setError("Enter a phone number first.");
+    if (phone.length !== 10) {
+      setError("Enter your 10-digit phone number to continue.");
       return;
     }
 
@@ -21,8 +22,8 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
-    if (!phone.trim()) {
-      setError("Enter a phone number first.");
+    if (phone.length !== 10) {
+      setError("Enter your 10-digit phone number to continue.");
       return;
     }
 
@@ -39,11 +40,15 @@ export default function Login() {
     }
 
     try {
-      const response = await loginUser({ phone });
-      setUser(response.user);
+      const response = await loginUser({ phone: normalizedPhone });
+      setSession({
+        user: response.user,
+        token: response.token,
+        expiresAt: response.expiresAt,
+      });
       navigate("/app/dashboard");
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError(err?.response?.data?.message || err?.message || "Login failed. Please try again.");
       console.error("Login Error:", err);
     }
   };
@@ -58,9 +63,10 @@ export default function Login() {
 
       <input
         type="text"
+        inputMode="numeric"
         placeholder="Enter phone number"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
         className="border p-3 rounded-lg mb-4"
       />
 

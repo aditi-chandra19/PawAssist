@@ -26,11 +26,12 @@ const loginHighlights = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const setUser = useUserStore((state) => state.setUser);
+  const setSession = useUserStore((state) => state.setSession);
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
+  const normalizedPhone = `+91${phone}`;
 
   const otpValue = useMemo(() => otp.join(""), [otp]);
 
@@ -42,8 +43,8 @@ export default function LoginPage() {
   };
 
   const handleSendOtp = () => {
-    if (!phone.trim()) {
-      setError("Enter a phone number first.");
+    if (phone.length !== 10) {
+      setError("Enter your 10-digit phone number to continue.");
       return;
     }
 
@@ -52,8 +53,8 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
-    if (!phone.trim()) {
-      setError("Enter a phone number first.");
+    if (phone.length !== 10) {
+      setError("Enter your 10-digit phone number to continue.");
       return;
     }
 
@@ -68,11 +69,15 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await loginUser({ phone });
-      setUser(response.user);
+      const response = await loginUser({ phone: normalizedPhone });
+      setSession({
+        user: response.user,
+        token: response.token,
+        expiresAt: response.expiresAt,
+      });
       navigate("/app/dashboard");
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError(err?.response?.data?.message || err?.message || "Login failed. Please try again.");
       console.error("Login Error:", err);
     }
   };
@@ -122,9 +127,10 @@ export default function LoginPage() {
             <div className="paw-input-shell">
               <input
                 type="tel"
-                placeholder="+91 98765 43210"
+                inputMode="numeric"
+                placeholder="98765 43210"
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={(event) => setPhone(event.target.value.replace(/\D/g, "").slice(0, 10))}
               />
               <button type="button" className="paw-input-action" onClick={handleSendOtp}>
                 OTP
