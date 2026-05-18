@@ -8363,6 +8363,14 @@ body,
 .booking-provider-toolbar {
   gap: 12px;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.booking-action-primary-top {
+  min-width: 132px;
+  justify-content: center;
+  display: inline-flex;
 }
 
 .booking-provider-card {

@@ -1,14 +1,18 @@
-import API, { canUseApi } from "./api";
+import API, { canUseApi, getApiErrorMessage } from "./api";
+
+const SETTINGS_TIMEOUT_MS = import.meta.env.PROD ? 3000 : 2500;
 
 const requireApi = async () => {
   if (!(await canUseApi())) {
-    throw new Error("API unavailable");
+    throw new Error(getApiErrorMessage(null, "Settings service is unavailable."));
   }
 };
 
 export const fetchSettings = async () => {
   await requireApi();
-  const response = await API.get("/auth/settings");
+  const response = await API.get("/auth/settings", {
+    timeout: SETTINGS_TIMEOUT_MS,
+  });
   return response.data;
 };
 

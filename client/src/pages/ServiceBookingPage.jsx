@@ -272,6 +272,13 @@ export default function ServiceBookingPage() {
     }
   };
 
+  const renderTopContinueButton = () =>
+    currentStep < 5 ? (
+      <button type="button" className="booking-action-primary booking-action-primary-top" onClick={handleContinue} disabled={!canContinue}>
+        Continue
+      </button>
+    ) : null;
+
   return (
     <div className="care-page booking-wizard-page">
       <header className="booking-wizard-header">
@@ -301,10 +308,11 @@ export default function ServiceBookingPage() {
 
         {currentStep === 1 ? (
           <section className="booking-panel">
-            <div className="booking-panel-head">
+            <div className="booking-panel-head booking-panel-head-split">
               <div>
                 <h2>Choose Your Service</h2>
               </div>
+              {renderTopContinueButton()}
             </div>
 
             <div className="booking-service-grid">
@@ -339,10 +347,11 @@ export default function ServiceBookingPage() {
 
         {currentStep === 2 ? (
           <section className="booking-panel booking-panel-narrow">
-            <div className="booking-panel-head">
+            <div className="booking-panel-head booking-panel-head-split">
               <div>
                 <h2>Select Your Pet</h2>
               </div>
+              {renderTopContinueButton()}
             </div>
 
             <div className="booking-pet-grid">
@@ -365,10 +374,11 @@ export default function ServiceBookingPage() {
 
         {currentStep === 3 ? (
           <section className="booking-panel booking-panel-narrow">
-            <div className="booking-panel-head">
+            <div className="booking-panel-head booking-panel-head-split">
               <div>
                 <h2>Choose Date & Time</h2>
               </div>
+              {renderTopContinueButton()}
             </div>
 
             <div className="booking-date-time-layout">
@@ -416,6 +426,7 @@ export default function ServiceBookingPage() {
                     <option value="distance">Sort by Distance</option>
                   </select>
                 </label>
+                {renderTopContinueButton()}
               </div>
             </div>
 

@@ -244,8 +244,8 @@ function matchesQuery(item, query) {
 
 export default function CareDashboard({ forcePreview = false }) {
   const navigate = useNavigate();
-  const { data, loading } = useAppData();
   const user = useUserStore((state) => state.user);
+  const { data, loading } = useAppData({ preferLocal: forcePreview || !user });
   const [searchQuery, setSearchQuery] = useState("");
   const [activeServiceCategory, setActiveServiceCategory] = useState("all");
   const [showAllServices, setShowAllServices] = useState(false);

@@ -24,7 +24,9 @@ function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    if (!user?.id || !token) {
+    const isProtectedRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/app");
+
+    if (!user?.id || !token || !isProtectedRoute) {
       return;
     }
 

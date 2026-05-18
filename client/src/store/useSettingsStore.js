@@ -96,7 +96,7 @@ const syncSettings = async (snapshot) => {
   try {
     await saveSettings(snapshot);
   } catch (error) {
-    console.error("Settings sync failed:", error);
+    console.warn("Settings sync skipped:", error?.message || error);
   }
 };
 
@@ -123,7 +123,7 @@ const useSettingsStore = create((set, get) => ({
       get().replaceAllSettings(remote);
       return true;
     } catch (error) {
-      console.error("Settings hydration failed:", error);
+      console.warn("Settings hydration skipped:", error?.message || error);
       return false;
     }
   },
