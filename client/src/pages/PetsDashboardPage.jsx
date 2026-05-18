@@ -148,6 +148,7 @@ const normalizePet = (pet, index) => {
     dietaryNeeds: pet?.diet || summary.dietaryNeeds,
     featured: summary.featured,
     photo: getPetPhoto(pet),
+    profileIncomplete: Boolean(pet?.profileIncomplete),
   };
 };
 
@@ -220,14 +221,14 @@ export default function PetsDashboardPage() {
     setForm({
       name: pet.name,
       petType: pet.petType,
-      breed: pet.breed,
-      gender: pet.gender,
-      age: pet.age,
-      weight: pet.weight,
+      breed: pet.profileIncomplete ? "" : pet.breed,
+      gender: pet.gender === "Female" ? "Female" : "Male",
+      age: pet.profileIncomplete || pet.age === "Add age" ? "" : pet.age,
+      weight: pet.profileIncomplete || pet.weight === "Add weight" ? "" : pet.weight,
       color: pet.color,
-      medicalHistory: pet.medicalHistory,
+      medicalHistory: pet.profileIncomplete ? "" : pet.medicalHistory,
       allergies: pet.allergies,
-      dietaryNeeds: pet.dietaryNeeds,
+      dietaryNeeds: pet.profileIncomplete ? "" : pet.dietaryNeeds,
     });
   };
 
@@ -246,12 +247,13 @@ export default function PetsDashboardPage() {
   };
 
   const buildPetPayload = () => ({
+    profileIncomplete: !form.breed.trim() || !form.age.trim() || !form.weight.trim(),
     name: form.name.trim() || "New Pet",
     type: form.petType,
-    breed: form.breed.trim() || form.petType,
+    breed: form.breed.trim(),
     gender: form.gender,
-    age: form.age.trim() || "2 years",
-    weight: form.weight.trim() || "8 kg",
+    age: form.age.trim() || "Add age",
+    weight: form.weight.trim() || "Add weight",
     color: form.color.trim() || "Brown",
     medicalHistory: form.medicalHistory.trim() || "No major medical history shared yet.",
     allergies: form.allergies.trim() || "None",
@@ -347,58 +349,73 @@ export default function PetsDashboardPage() {
 
               <div className="pet-reference-copy">
                 <h2>{pet.name}</h2>
-                <p>{pet.breed}</p>
+                <p>{pet.profileIncomplete ? "Profile details pending" : pet.breed}</p>
               </div>
             </div>
 
-            <div className="pet-reference-body">
-              <div className="pet-reference-stats">
-                <div>
-                  <span>Age</span>
-                  <strong>{pet.age}</strong>
-                </div>
-                <div>
-                  <span>Weight</span>
-                  <strong>{pet.weight}</strong>
-                </div>
-                <div>
-                  <span>Gender</span>
-                  <strong>{pet.gender}</strong>
-                </div>
-              </div>
+            <div className={`pet-reference-body${pet.profileIncomplete ? " pending" : ""}`}>
+              {pet.profileIncomplete ? (
+                <>
+                  <p className="pet-pending-copy">
+                    Added from registration. Open edit to add breed, age, weight, and health details whenever you are ready.
+                  </p>
+                  <div className="pet-reference-actions">
+                    <button type="button" className="gradient-button cyan" onClick={() => handleViewDetails(pet)}>
+                      Edit Details
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="pet-reference-stats">
+                    <div>
+                      <span>Age</span>
+                      <strong>{pet.age}</strong>
+                    </div>
+                    <div>
+                      <span>Weight</span>
+                      <strong>{pet.weight}</strong>
+                    </div>
+                    <div>
+                      <span>Gender</span>
+                      <strong>{pet.gender}</strong>
+                    </div>
+                  </div>
 
-              <div className="pet-health-score-row">
-                <span>Health Score</span>
-                <strong>{pet.healthScore}%</strong>
-              </div>
-              <div className="pet-health-progress">
-                <div style={{ width: `${pet.healthScore}%` }} />
-              </div>
+                  <div className="pet-health-score-row">
+                    <span>Health Score</span>
+                    <strong>{pet.healthScore}%</strong>
+                  </div>
+                  <div className="pet-health-progress">
+                    <div style={{ width: `${pet.healthScore}%` }} />
+                  </div>
 
-              <div className={`pet-detail-strip ${pet.vaccinationStatus === "Pending Booster" ? "warning" : "success"}`}>
-                <div>
-                  <span>Vaccination</span>
-                  <strong>{pet.vaccinationStatus}</strong>
-                </div>
-                <span className="pet-detail-icon">ED</span>
-              </div>
+                  <div className={`pet-detail-strip ${pet.vaccinationStatus === "Pending Booster" ? "warning" : "success"}`}>
+                    <div>
+                      <span>Vaccination</span>
+                      <strong>{pet.vaccinationStatus}</strong>
+                    </div>
+                    <span className="pet-detail-icon">ED</span>
+                  </div>
 
-              <div className="pet-detail-strip lavender">
-                <div>
-                  <span>Next Checkup</span>
-                  <strong>{pet.nextCheckup}</strong>
-                </div>
-                <span className="pet-detail-icon">DT</span>
-              </div>
+                  <div className="pet-detail-strip lavender">
+                    <div>
+                      <span>Next Checkup</span>
+                      <strong>{pet.nextCheckup}</strong>
+                    </div>
+                    <span className="pet-detail-icon">DT</span>
+                  </div>
 
-              <div className="pet-reference-actions">
-                <button type="button" className="gradient-button cyan" onClick={() => handleViewDetails(pet)}>
-                  View Details
-                </button>
-                <button type="button" className="gradient-button violet" onClick={() => navigate("/app/booking?service=premium-vet-visit&mode=consult")}>
-                  Book Service
-                </button>
-              </div>
+                  <div className="pet-reference-actions">
+                    <button type="button" className="gradient-button cyan" onClick={() => handleViewDetails(pet)}>
+                      View Details
+                    </button>
+                    <button type="button" className="gradient-button violet" onClick={() => navigate("/app/booking?service=premium-vet-visit&mode=consult")}>
+                      Book Service
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </article>
         ))}

@@ -46,11 +46,45 @@ function ensureSettingsState(user) {
   return changed;
 }
 
-async function ensureUserPets(userId) {
+function createStarterPetRecord(userId, petName) {
+  const normalizedPetName = String(petName || "").trim();
+
+  if (!normalizedPetName) {
+    return null;
+  }
+
+  return {
+    userId,
+    petId: createId("pet"),
+    name: normalizedPetName,
+    type: "Other",
+    breed: "",
+    gender: "",
+    age: "Add age",
+    weight: "Add weight",
+    color: "",
+    mood: "Profile in progress",
+    nextCare: "Add your pet's details to personalize reminders.",
+    diet: "",
+    medicalHistory: "",
+    allergies: "None",
+    photo: "",
+    profileIncomplete: true,
+  };
+}
+
+async function ensureUserPets(userId, preferredPetName = "") {
   const existingPets = await Pet.find({ userId }).lean();
 
   if (existingPets.length > 0) {
     return existingPets;
+  }
+
+  const starterPet = createStarterPetRecord(userId, preferredPetName);
+
+  if (starterPet) {
+    await Pet.create(starterPet);
+    return Pet.find({ userId }).lean();
   }
 
   const seededPets = defaultPets.map((pet, index) => ({
@@ -81,6 +115,7 @@ function normalizePetRecord(pet) {
     medicalHistory: pet.medicalHistory || "",
     allergies: pet.allergies || "None",
     photo: pet.photo || "",
+    profileIncomplete: Boolean(pet.profileIncomplete),
   };
 }
 
@@ -126,7 +161,7 @@ async function loginUser(payload) {
     await user.save();
   }
 
-  await ensureUserPets(user.userId);
+  await ensureUserPets(user.userId, user.petName);
 
   return toPublicUser(user);
 }
@@ -279,7 +314,8 @@ async function getPets(userId) {
     return memoryStore.getOverview(userId).pets.map(normalizePetRecord);
   }
 
-  const pets = await ensureUserPets(userId);
+  const user = await User.findOne({ userId }).lean();
+  const pets = await ensureUserPets(userId, user?.petName);
   return pets.map(normalizePetRecord);
 }
 
@@ -304,6 +340,7 @@ async function addPet(userId, payload) {
     medicalHistory: payload.medicalHistory || "",
     allergies: payload.allergies || "None",
     photo: payload.photo || "",
+    profileIncomplete: Boolean(payload.profileIncomplete),
   });
 
   return normalizePetRecord(pet.toObject());
@@ -334,6 +371,7 @@ async function updatePet(userId, petId, patch) {
     "medicalHistory",
     "allergies",
     "photo",
+    "profileIncomplete",
   ];
 
   for (const field of allowedFields) {
@@ -390,7 +428,7 @@ async function getOverview(userId) {
   }
 
   const user = (await getUserById(userId)) || (await loginUser({ phone: "9999999999", name: "Aditi" }));
-  const pets = await ensureUserPets(user.id);
+  const pets = await ensureUserPets(user.id, user.petName);
   const bookings = await getBookings(user.id);
 
   const normalizedPets = pets.map((pet) => ({

@@ -17,6 +17,7 @@ const petSchema = new mongoose.Schema(
     medicalHistory: { type: String, default: "" },
     allergies: { type: String, default: "None" },
     photo: { type: String, default: "" },
+    profileIncomplete: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

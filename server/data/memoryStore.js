@@ -33,13 +33,45 @@ function getUserById(userId) {
   return users.find((entry) => entry.id === userId) || users[0];
 }
 
-function getUserPets(userId) {
+function createStarterPet(userId, petName) {
+  const normalizedPetName = String(petName || "").trim();
+
+  if (!normalizedPetName) {
+    return null;
+  }
+
+  const petId = createId("pet");
+  return {
+    id: petId,
+    petId,
+    userId,
+    name: normalizedPetName,
+    type: "Other",
+    breed: "",
+    gender: "",
+    age: "Add age",
+    weight: "Add weight",
+    color: "",
+    mood: "Profile in progress",
+    nextCare: "Add your pet's details to personalize reminders.",
+    diet: "",
+    medicalHistory: "",
+    allergies: "None",
+    photo: "",
+    profileIncomplete: true,
+  };
+}
+
+function getUserPets(userId, preferredPetName = "") {
   if (!petsByUser[userId]) {
-    petsByUser[userId] = defaultPets.map((pet, index) => ({
-      ...pet,
-      id: `${pet.petId}-${userId}-${index + 1}`,
-      userId,
-    }));
+    const starterPet = createStarterPet(userId, preferredPetName);
+    petsByUser[userId] = starterPet
+      ? [starterPet]
+      : defaultPets.map((pet, index) => ({
+        ...pet,
+        id: `${pet.petId}-${userId}-${index + 1}`,
+        userId,
+      }));
   }
 
   return petsByUser[userId];
@@ -64,6 +96,7 @@ function addPet(userId, payload) {
     medicalHistory: payload.medicalHistory || "",
     allergies: payload.allergies || "None",
     photo: payload.photo || "",
+    profileIncomplete: Boolean(payload.profileIncomplete),
   };
 
   const pets = getUserPets(userId);
@@ -100,7 +133,7 @@ function deletePet(userId, petId) {
   return true;
 }
 
-function loginUser({ phone, name }) {
+function loginUser({ phone, name, city, petName }) {
   const normalizedPhone = String(phone || "").trim();
   let user = users.find((entry) => entry.phone === normalizedPhone);
 
@@ -109,16 +142,28 @@ function loginUser({ phone, name }) {
       id: createId("user"),
       name: name?.trim() || "Pet Parent",
       phone: normalizedPhone,
-      city: "Kolkata",
+      city: city?.trim() || "Kolkata",
       email: "care@pawassist.app",
-      petName: "",
+      petName: petName?.trim() || "",
       notes: "Appointments, health reminders, and support updates",
       settings: createDefaultSettings(),
       passwordHash: "",
       passwordSalt: "",
     };
     users.push(user);
-    getUserPets(user.id);
+    getUserPets(user.id, user.petName);
+  }
+
+  if (name?.trim()) {
+    user.name = name.trim();
+  }
+
+  if (city?.trim()) {
+    user.city = city.trim();
+  }
+
+  if (petName !== undefined) {
+    user.petName = String(petName || "").trim();
   }
 
   if (!user.settings) {
@@ -216,7 +261,7 @@ function getBookings(userId) {
 
 function getOverview(userId) {
   const user = getUserById(userId);
-  return buildOverview(user, getUserPets(user.id), getBookings(user.id));
+  return buildOverview(user, getUserPets(user.id, user.petName), getBookings(user.id));
 }
 
 module.exports = {

@@ -7716,6 +7716,17 @@ body,
   gap: 14px;
 }
 
+.pet-reference-body.pending {
+  align-content: start;
+  min-height: 188px;
+}
+
+.pet-pending-copy {
+  color: #52616a;
+  margin: 0;
+  line-height: 1.65;
+}
+
 .pet-reference-stats {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
