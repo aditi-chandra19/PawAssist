@@ -36,8 +36,15 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const redirectTo = "/app/dashboard";
+  const redirectTo = location.state?.from || "/app/dashboard";
   const normalizedPhone = `+91${form.phone}`;
+  const completedSteps = [form.name.trim(), form.phone.length === 10, form.petName.trim(), form.city.trim()].filter(Boolean).length;
+  const completionWidth = `${(completedSteps / 4) * 100}%`;
+  const canSubmit = Boolean(form.name.trim()) && form.phone.length === 10;
+  const phoneHelper =
+    form.phone.length === 10
+      ? "Phone number is ready. Your account can be created in one step."
+      : "Add a valid 10-digit phone number so we can create your care profile.";
 
   const updateField = (field) => (event) => {
     const nextValue =
@@ -127,15 +134,29 @@ export default function RegisterPage() {
         </section>
 
         <section className="paw-login-card">
+          <div className="paw-auth-status">
+            <span className="paw-auth-status-dot" />
+            New account setup
+          </div>
           <h1>Create Account</h1>
           <p>Set up your profile and step into your pet care dashboard right away.</p>
+          <div className="paw-form-meter" aria-hidden="true">
+            <span style={{ width: completionWidth }} />
+          </div>
+          <p className="paw-submit-note">
+            {canSubmit
+              ? "Core details look good. Add pet and city details now or update them later."
+              : "Start with your name and phone number, then finish the rest at your pace."}
+          </p>
 
-          <form onSubmit={handleRegister}>
+          <form onSubmit={handleRegister} className="paw-auth-form" aria-busy={isSubmitting}>
             <label className="paw-field">
               <span>Full Name</span>
               <div className="paw-input-shell">
                 <input
                   type="text"
+                  autoComplete="name"
+                  autoFocus
                   placeholder="Alex Johnson"
                   value={form.name}
                   onChange={updateField("name")}
@@ -146,22 +167,25 @@ export default function RegisterPage() {
             <label className="paw-field">
               <span>Phone Number</span>
               <div className="paw-input-shell">
-                <span style={{ color: "#334155", fontWeight: 700, paddingRight: "10px" }}>+91</span>
+                <span className="paw-input-prefix">+91</span>
                 <input
                   type="tel"
                   inputMode="numeric"
+                  autoComplete="tel-national"
                   placeholder="98765 43210"
                   value={form.phone}
                   onChange={updateField("phone")}
                 />
               </div>
             </label>
+            <p className={`paw-field-helper${form.phone.length === 10 ? " success" : ""}`}>{phoneHelper}</p>
 
             <label className="paw-field">
               <span>Pet Name</span>
               <div className="paw-input-shell">
                 <input
                   type="text"
+                  autoComplete="off"
                   placeholder="Milo"
                   value={form.petName}
                   onChange={updateField("petName")}
@@ -174,6 +198,7 @@ export default function RegisterPage() {
               <div className="paw-input-shell">
                 <input
                   type="text"
+                  autoComplete="address-level2"
                   placeholder="Kolkata"
                   value={form.city}
                   onChange={updateField("city")}
@@ -181,9 +206,9 @@ export default function RegisterPage() {
               </div>
             </label>
 
-            {error ? <p className="error-text">{error}</p> : null}
+            {error ? <p className="error-text" role="alert">{error}</p> : null}
 
-            <button type="submit" className="paw-gradient-button" disabled={isSubmitting}>
+            <button type="submit" className="paw-gradient-button" disabled={isSubmitting || !canSubmit}>
               {isSubmitting ? "Creating Account..." : "Create Account"}
             </button>
           </form>

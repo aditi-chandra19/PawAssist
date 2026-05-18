@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 import useUserStore from "../store/useUserStore";
@@ -31,8 +31,21 @@ export default function AuthLoginPage() {
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const redirectTo = "/app/dashboard";
+  const redirectTo = location.state?.from || "/app/dashboard";
   const normalizedPhone = `+91${phone}`;
+  const isPhoneReady = phone.length === 10;
+  const digitsLeft = Math.max(0, 10 - phone.length);
+  const phoneHelper = useMemo(() => {
+    if (isPhoneReady) {
+      return "Number looks good. We will take you straight to your dashboard.";
+    }
+
+    if (!phone.length) {
+      return "Use the same 10-digit number you used to create your PawAssist account.";
+    }
+
+    return `${digitsLeft} digit${digitsLeft === 1 ? "" : "s"} left to continue.`;
+  }, [digitsLeft, isPhoneReady, phone.length]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -98,17 +111,23 @@ export default function AuthLoginPage() {
         </section>
 
         <section className="paw-login-card">
+          <div className="paw-auth-status">
+            <span className="paw-auth-status-dot" />
+            Quick sign in
+          </div>
           <h1>Welcome Back</h1>
           <p>Log in directly with your phone number and continue caring for your pet.</p>
 
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} className="paw-auth-form" aria-busy={isSubmitting}>
             <label className="paw-field">
               <span>Phone Number</span>
               <div className="paw-input-shell">
-                <span style={{ color: "#334155", fontWeight: 700, paddingRight: "10px" }}>+91</span>
+                <span className="paw-input-prefix">+91</span>
                 <input
                   type="tel"
                   inputMode="numeric"
+                  autoComplete="tel-national"
+                  autoFocus
                   placeholder="98765 43210"
                   value={phone}
                   onChange={(event) => {
@@ -120,11 +139,15 @@ export default function AuthLoginPage() {
               </div>
             </label>
 
-            {error ? <p className="error-text">{error}</p> : null}
+            <p className={`paw-field-helper${isPhoneReady ? " success" : ""}`}>{phoneHelper}</p>
 
-            <button type="submit" className="paw-gradient-button" disabled={isSubmitting}>
-              {isSubmitting ? "Logging in..." : "Login"}
+            {error ? <p className="error-text" role="alert">{error}</p> : null}
+
+            <button type="submit" className="paw-gradient-button" disabled={isSubmitting || !isPhoneReady}>
+              {isSubmitting ? "Logging you in..." : "Login"}
             </button>
+
+            <p className="paw-submit-note">Fast sign-in, secure session, and no extra setup screens.</p>
           </form>
 
           <div className="paw-divider">

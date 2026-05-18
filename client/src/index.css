@@ -407,6 +407,7 @@ button {
     radial-gradient(circle at top left, rgba(201, 134, 92, 0.12), transparent 28%),
     radial-gradient(circle at bottom right, rgba(91, 139, 115, 0.1), transparent 24%),
     #f8f4ed;
+  overflow: hidden;
 }
 
 .paw-login-layout {
@@ -428,6 +429,7 @@ button {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 25px 70px rgba(15, 23, 42, 0.12);
+  animation: pawAuthFloatIn 620ms ease both;
 }
 
 .paw-login-hero-card {
@@ -442,6 +444,11 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 320ms ease;
+}
+
+.paw-login-hero-card:hover .paw-login-hero-image {
+  transform: scale(1.02);
 }
 
 .paw-login-trust {
@@ -460,6 +467,7 @@ button {
 .paw-login-benefits {
   border-radius: 30px;
   padding: 22px 20px 22px;
+  animation-delay: 90ms;
 }
 
 .paw-auth-story {
@@ -550,6 +558,11 @@ button {
   grid-template-columns: 56px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.paw-auth-story-item:hover {
+  transform: translateX(4px);
 }
 
 .paw-auth-story-item > span {
@@ -579,6 +592,8 @@ button {
 .paw-login-card {
   border-radius: 32px;
   padding: 32px;
+  position: relative;
+  animation-delay: 160ms;
 }
 
 .paw-login-card h1 {
@@ -594,6 +609,30 @@ button {
 .paw-login-card > p {
   color: #64748b;
   margin: 10px 0 24px;
+}
+
+.paw-auth-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: #4b5f54;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.paw-auth-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b8b73, #c9865c);
+  box-shadow: 0 0 0 6px rgba(91, 139, 115, 0.12);
+}
+
+.paw-auth-form {
+  display: grid;
 }
 
 .paw-field {
@@ -615,6 +654,19 @@ button {
   border-radius: 18px;
   padding: 4px 6px 4px 18px;
   background: white;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.paw-input-shell:focus-within {
+  border-color: rgba(91, 139, 115, 0.72);
+  box-shadow: 0 0 0 4px rgba(91, 139, 115, 0.12);
+  transform: translateY(-1px);
+}
+
+.paw-input-prefix {
+  color: #334155;
+  font-weight: 700;
+  padding-right: 10px;
 }
 
 .paw-input-shell input {
@@ -623,6 +675,42 @@ button {
   outline: 0;
   padding: 14px 0;
   background: transparent;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.paw-input-shell input::placeholder {
+  color: #94a3b8;
+}
+
+.paw-field-helper,
+.paw-submit-note {
+  margin: 8px 0 0;
+  color: #708089;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.paw-field-helper.success {
+  color: #4f7c68;
+  font-weight: 700;
+}
+
+.paw-form-meter {
+  width: 100%;
+  height: 8px;
+  margin: -4px 0 12px;
+  background: rgba(148, 163, 184, 0.18);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.paw-form-meter span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5b8b73, #c9865c);
+  transition: width 220ms ease;
 }
 
 .paw-input-action {
@@ -691,6 +779,14 @@ button {
   filter: brightness(1.02);
 }
 
+.paw-gradient-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: 0 10px 20px rgba(91, 139, 115, 0.12);
+  filter: none;
+}
+
 .paw-divider {
   display: flex;
   align-items: center;
@@ -752,6 +848,18 @@ button {
 
 .paw-terms strong {
   color: #5b8b73;
+}
+
+@keyframes pawAuthFloatIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 980px) {
