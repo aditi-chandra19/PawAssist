@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAppData from "../services/useAppData";
 import useUserStore from "../store/useUserStore";
-import { createPet, deletePet, updatePet } from "../services/petService";
+import { createPet, deletePet, fetchPets, updatePet } from "../services/petService";
 
 const petPhotos = {
   "pet-1":
@@ -154,9 +153,9 @@ const normalizePet = (pet, index) => {
 
 export default function PetsDashboardPage() {
   const navigate = useNavigate();
-  const { data, loading, refresh } = useAppData();
   const user = useUserStore((state) => state.user);
   const [pets, setPets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
   const [form, setForm] = useState(initialForm);
@@ -164,12 +163,38 @@ export default function PetsDashboardPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!data?.pets) {
+    if (!user?.id) {
+      setPets([]);
+      setLoading(false);
       return;
     }
 
-    setPets(data.pets.filter(Boolean).map(normalizePet));
-  }, [data]);
+    let isMounted = true;
+
+    const loadPets = async () => {
+      setLoading(true);
+      try {
+        const remotePets = await fetchPets();
+        if (isMounted) {
+          setPets((remotePets || []).filter(Boolean).map(normalizePet));
+        }
+      } catch (error) {
+        if (isMounted) {
+          setErrorMessage(error.message || "Unable to load pets right now.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadPets();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   const totals = useMemo(() => {
     const dueVaccines = pets.filter((pet) => pet.vaccinationStatus === "Pending Booster").length;
@@ -248,12 +273,13 @@ export default function PetsDashboardPage() {
       const payload = buildPetPayload();
 
       if (selectedPet?.id) {
-        await updatePet(selectedPet.id, payload);
+        const updatedPet = normalizePet(await updatePet(selectedPet.id, payload), 0);
+        setPets((current) => current.map((pet) => (pet.id === updatedPet.id ? updatedPet : pet)));
       } else {
-        await createPet(payload);
+        const createdPet = normalizePet(await createPet(payload), pets.length);
+        setPets((current) => [...current, createdPet]);
       }
 
-      await refresh();
       handleCloseModal();
     } catch (error) {
       setErrorMessage(error.message || "Unable to save pet right now.");
@@ -271,7 +297,7 @@ export default function PetsDashboardPage() {
 
     try {
       await deletePet(pet.id);
-      await refresh();
+      setPets((current) => current.filter((item) => item.id !== pet.id));
 
       if (selectedPet?.id === pet.id) {
         handleCloseModal();
@@ -281,7 +307,7 @@ export default function PetsDashboardPage() {
     }
   };
 
-  if (loading || !data) {
+  if (loading) {
     return <div className="panel">Loading pet profiles...</div>;
   }
 

@@ -6,6 +6,18 @@ const requireApi = async () => {
   }
 };
 
+export const fetchPets = async () => {
+  try {
+    await requireApi();
+    const response = await API.get("/pets", {
+      timeout: import.meta.env.PROD ? 4000 : 2500,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to load pets right now."));
+  }
+};
+
 export const createPet = async (payload) => {
   try {
     await requireApi();
