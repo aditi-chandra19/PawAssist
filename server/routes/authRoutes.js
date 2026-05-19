@@ -48,11 +48,7 @@ function buildSession(user) {
 async function respondWithUserSession(res, payload) {
   const user = await loginUser(payload);
 
-  return res.json({
-    ...buildSession(user),
-    overview: await getOverview(user.id),
-    bookings: await getBookings(user.id),
-  });
+  return res.json(buildSession(user));
 }
 
 router.post("/request-otp", authRequestLimiter, async (req, res) => {
