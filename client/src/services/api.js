@@ -48,11 +48,11 @@ API.interceptors.response.use(
   },
 );
 
-export const getApiErrorMessage = (error, fallbackMessage = "Request failed.") =>
+export const getApiErrorMessage = (error, fallbackMessage = "Request failed.", timeoutMs = API_TIMEOUT_MS) =>
   error?.response?.data?.message ||
   apiConfigurationError ||
   (error?.code === "ECONNABORTED"
-    ? `The server took longer than ${Math.round(API_TIMEOUT_MS / 1000)} seconds to respond. Please try again.`
+    ? `The server took longer than ${Math.round(timeoutMs / 1000)} seconds to respond. Please try again.`
     : error?.message) ||
   fallbackMessage;
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../store/useUserStore";
 import { createPet, deletePet, fetchPets, updatePet } from "../services/petService";
@@ -162,6 +162,11 @@ export default function PetsDashboardPage() {
   const [form, setForm] = useState(initialForm);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const petsRef = useRef([]);
+
+  useEffect(() => {
+    petsRef.current = pets;
+  }, [pets]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -178,10 +183,11 @@ export default function PetsDashboardPage() {
         const remotePets = await fetchPets();
         if (isMounted) {
           setPets((remotePets || []).filter(Boolean).map(normalizePet));
+          setErrorMessage("");
         }
       } catch (error) {
         if (isMounted) {
-          setErrorMessage(error.message || "Unable to load pets right now.");
+          setErrorMessage(petsRef.current.length ? "" : error.message || "Unable to load pets right now.");
         }
       } finally {
         if (isMounted) {
@@ -270,11 +276,11 @@ export default function PetsDashboardPage() {
 
     setIsSaving(true);
     setErrorMessage("");
+    const payload = buildPetPayload();
+    const editingPetId = selectedPet?.id;
 
     try {
-      const payload = buildPetPayload();
-
-      if (selectedPet?.id) {
+      if (editingPetId) {
         const updatedPet = normalizePet(await updatePet(selectedPet.id, payload), 0);
         setPets((current) => current.map((pet) => (pet.id === updatedPet.id ? updatedPet : pet)));
       } else {
@@ -284,6 +290,21 @@ export default function PetsDashboardPage() {
 
       handleCloseModal();
     } catch (error) {
+      try {
+        const remotePets = (await fetchPets()).filter(Boolean).map(normalizePet);
+        const savedPet = editingPetId
+          ? remotePets.find((pet) => pet.id === editingPetId)
+          : remotePets.find((pet) => pet.name.toLowerCase() === payload.name.toLowerCase());
+
+        if (savedPet) {
+          setPets(remotePets);
+          handleCloseModal();
+          return;
+        }
+      } catch {
+        // Keep the original save error below if the recovery refresh also fails.
+      }
+
       setErrorMessage(error.message || "Unable to save pet right now.");
     } finally {
       setIsSaving(false);
